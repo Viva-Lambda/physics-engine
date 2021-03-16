@@ -1,16 +1,28 @@
 cmake_minimum_required (VERSION 3.0.2)
 project("physics-engine")
 
-#find_package(OpenGL REQUIRED)
+find_package(OpenGL REQUIRED)
 find_package (Threads REQUIRED)
 
 set (CMAKE_BUILD_TYPE "Debug")
 set (CMAKE_CXX_FLAGS "-std=c++17")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -ggdb -Wall -Wextra")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -ggdb -Wall -Wextra -ldl")
 
 include_directories(
     "./include/"
 )
+
+# for importing modules
+set(AbsPathPrefix 
+    "/media/kaan/Data7510/GitProjects")
+
+# glfw
+# find_package(glfw3 REQUIRED)
+add_library(glfwLib SHARED IMPORTED)
+set_target_properties(glfwLib PROPERTIES IMPORTED_LOCATION
+    "${AbsPathPrefix}/glfw/bin/lib/libglfw.so")
+include_directories("${AbsPathPrefix}/glfw/bin/include/")
+
 #set(AssimpSOPath
 #    "/media/kaan/Data7510/GitProjects/assimp/build/bin/libassimp.so")
 
@@ -25,7 +37,18 @@ include_directories(
 #   PROPERTY IMPORTED_LOCATION 
 #   ${AssimpSOPath}
 #   )
+
 add_executable(main.out "src/main.cpp")
+
+add_executable(
+    demoAppTest.out 
+    "src/demos/glad.c"
+    "src/demos/demowindow.cpp"
+    )
 #target_link_libraries(final.out AssimpLib)
 
+#target_link_libraries(demoAppTest.out OpenGL)
+target_link_libraries(demoAppTest.out glfwLib)
+
 install(TARGETS main.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
+install(TARGETS demoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")

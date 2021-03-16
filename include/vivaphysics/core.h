@@ -117,7 +117,7 @@ public:
       components[i] = 0;
     }
   }
-  void clean() {
+  void clear() {
     components = nullptr;
     nb_components = 0;
   }
@@ -259,12 +259,39 @@ public:
   real square_magnitude() const {
     return x() * x() + y() * y() + z() * z();
   }
-  real normalized() const {
+  Vector3 normalized() const {
     real size = magnitude();
     if (size > 0) {
-      return static_cast<real>(1 / size);
+      return *this / size;
     }
-    return 0.0;
+    return Vector3(0.0);
   }
+  Vector3 unit() const { return normalized(); }
+  void normalize() { *this /= magnitude(); }
+
+  /** limit size of the vector to size */
+  Vector3 trimmed(real size) const {
+    if (square_magnitude() > size * size) {
+      auto vec = normalized();
+      vec *= size;
+      return vec;
+    } else {
+      return *this;
+    }
+  }
+  void trim(real size) { *this = trimmed(size); }
 };
+void make_orthonormal_basis(const Vector3 &a,
+                            const Vector3 &b,
+                            Vector3 out[3]) {
+  auto anorm = a.normalized();
+  out[0] = anorm;
+  auto c = anorm.cross_product(b);
+  auto csqr = c.square_magnitude();
+  COMP_CHECK_MSG(csqr == 0.0, csqr, 0.0,
+                 "the magnitude of csqr should not be 0");
+  auto cnorm = c.normalized();
+  out[1] = cnorm;
+  out[2] = cnorm.cross_product(anorm);
+}
 };

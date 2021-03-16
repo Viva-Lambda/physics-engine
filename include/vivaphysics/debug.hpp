@@ -1,4 +1,5 @@
 // debugging utils
+#pragma once
 
 #include <external.hpp>
 

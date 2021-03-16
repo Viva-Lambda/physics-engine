@@ -1,6 +1,6 @@
 // main file
 #include <external.hpp>
-#include <vivaphysics/core.h>
+#include <vivaphysics/particle.hpp>
 
 int main() {
   std::cout << "Hello Engine" << std::endl;
