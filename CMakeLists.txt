@@ -2,6 +2,9 @@ cmake_minimum_required (VERSION 3.0.2)
 project("physics-engine")
 
 find_package(OpenGL REQUIRED)
+
+message(STATUS "Found GL in ${OPENGL_LIBRARY}")
+
 find_package (Threads REQUIRED)
 
 set (CMAKE_BUILD_TYPE "Debug")
@@ -22,6 +25,12 @@ add_library(glfwLib SHARED IMPORTED)
 set_target_properties(glfwLib PROPERTIES IMPORTED_LOCATION
     "${AbsPathPrefix}/glfw/bin/lib/libglfw.so")
 include_directories("${AbsPathPrefix}/glfw/bin/include/")
+
+# glut
+#add_library(glutLib SHARED IMPORTED)
+#set_target_properties(glutLib PROPERTIES IMPORTED_LOCATION
+#    "${AbsPathPrefix}/FreeGLUT/freeglut/freeglut/lib/libglut.so.3")
+#include_directories("${AbsPathPrefix}/FreeGLUT/freeglut/freeglut/include/")
 
 #set(AssimpSOPath
 #    "/media/kaan/Data7510/GitProjects/assimp/build/bin/libassimp.so")
@@ -47,7 +56,6 @@ add_executable(
     )
 #target_link_libraries(final.out AssimpLib)
 
-#target_link_libraries(demoAppTest.out OpenGL)
 target_link_libraries(demoAppTest.out glfwLib)
 
 install(TARGETS main.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")

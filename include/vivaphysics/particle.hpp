@@ -93,6 +93,7 @@ public:
     position = Vector3(x, y, z);
   }
   Vector3 get_position() const { return position; }
+  void get_position(Vector3 &pos) const { pos = position; }
   /**@}*/
 
   /**\name velocity related*/
@@ -132,6 +133,7 @@ public:
   Vector3 add_force(const Vector3 &v) {
     accumulated_force += v;
   }
+  void clear_accumulator() { accumulated_force.clear(); }
   /**@}*/
 
   /**@}*/

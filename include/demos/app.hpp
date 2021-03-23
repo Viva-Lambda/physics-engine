@@ -7,6 +7,8 @@
 
 using namespace vivaphysics;
 
+namespace vivademos {
+
 class DemoApp {
 protected:
   // window size related
@@ -102,4 +104,5 @@ public:
   virtual void mouse_drag(int x, int y) {}
   virtual void render_text(int x, int y, std::string txt,
                            void *font = nullptr) {}
+};
 };
