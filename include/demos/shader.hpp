@@ -307,3 +307,88 @@ Shader::Shader(std::string *shaderPaths,
 }
 
 void Shader::useProgram() { glUseProgram(programId); }
+
+Shader mk_const_color_mesh_shader() {
+  const GLchar *vertex_source = "#version 330\n \ 
+      layout(location = 0) in vec3 aPos;\n \
+      layout(location = 1) in vec3 aNormal;\n \
+      layout(location = 2) in vec2 aTexCoord;\n \
+      layout(location = 3) in vec3 aTan;\n \
+      layout(location = 4) in vec3 aBiTan;\n \
+      uniform mat4 view;\n \
+      uniform mat4 model;\n \
+      uniform mat4 projection;\n \
+      out vec3 FragPos;\n \ 
+      out vec2 TexCoord;\n \ 
+      out vec3 Normal;\n \
+      out mat3 TBN;\n \
+      void main() {\n \
+        FragPos = vec3(model * vec4(aPos, 1.0));\n \
+        TexCoord = aTexCoord;\n \
+        Normal = vec3(model * vec4(aNormal, 1.0));\n \
+        TBN = mat3(\n \
+        vec3(model * vec4(aTan, 0.0)),\n vec3(mdel * vec4(aBiTan, 0.0)),\n \
+            vec3(model * vec4(aNormal, 0.0)));\n \
+        gl_Position = projection * view * model * vec4(aPos, 1.0);\n \
+      }\n";
+  const GLchar *fragment_source = "#version 330 \n \
+in vec3 Normal;\n \
+in vec3 FragPos;\n \
+in vec2 TexCoord;\n \
+out vec4 FragColor;\n \
+uniform float ambientCoeff; // a good value is 0.1\n \
+uniform vec3 attC;          // x=c1, y=c2, z=c3 \n \
+uniform float lightIntensity = 1.0;\n \
+// textures\n \
+uniform vec3 viewPos;\n \
+uniform vec3 lightPos;\n \
+uniform vec3 diffColor;\n \
+float computeAttenuation(vec3 att);\n \
+vec3 getSurfaceNormal();\n \
+vec3 getLightDir();\n \
+vec3 getViewDir();\n \
+vec3 getDiffuseColor(vec3 ldir, vec3 normal, vec3 color);\n \
+vec3 getSpecColor(vec3 lightDir, vec3 normal);\n \
+void main() {\n \
+  vec3 color = diffColor;\n \
+  // ambient term I_a × O_d × k_a\n \
+  vec3 ambient = color * ambientCoeff;\n \
+  // lambertian terms k_d * (N \cdot L) * I_p\n \
+  vec3 surfaceNormal = getSurfaceNormal();\n \
+  vec3 lightDirection = getLightDir();\n \
+  vec3 diffuseColor = getDiffuseColor(lightDirection, surfaceNormal, color);\n \
+  // attenuation term f_att\n \
+  // f_att = min(\frac{1}{c_1 + c_2{\times}d_L + c_3{\times}d^2_{L}} , 1)\n \
+  float attenuation = computeAttenuation(attC);\n \
+  vec3 diffuse = attenuation * diffuseColor * lightIntensity;\n \
+  // adding specular terms\n \
+  // specmap\n \
+  foat gamma = 2.2;\n \
+  vec3 total = ambient + diffuse + specular;\n \
+  FragColor = vec4(pow(total, vec3(1.0 / gamma)), 1.0);\n \
+}\n \
+float computeAttenuation(vec3 att) {\n \
+  float lfragdist = distance(lightPos, FragPos);\n \
+  float distSqr = lfragdist * lfragdist;\n \
+  float att1 = lfragdist * att.y;\n \
+  float att2 = distSqr * att.z;\n \
+  float result = att.x + att2 + att1;\n \
+  return min(1 / result, 1.0);\n \
+}\n \
+vec3 getSurfaceNormal() { return normalize(Normal); }\n \
+vec3 getLightDir() { return normalize(lightPos - FragPos); }\n \
+vec3 getViewDir() { return normalize(viewPos - FragPos); }\n \
+vec3 getDiffuseColor(vec3 ldir, vec3 normal, vec3 color) {\n \
+  float costheta = dot(ldir, normal);\n \
+  // opaque surfaces\n \
+  return max(costheta, 0.0) * color;\n \
+}\n \
+";
+  return Shader(vertex_source, fragment_source, true);
+}
+Shader mk_const_color_mesh_shader(const glm::vec3 &color) {
+  Shader shdr = mk_const_color_mesh_shader();
+  shdr.useProgram();
+  shdr.setVec3Uni("diffColor", color);
+  return shdr;
+}

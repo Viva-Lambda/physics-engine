@@ -58,5 +58,16 @@ add_executable(
 
 target_link_libraries(demoAppTest.out glfwLib)
 
+add_executable(
+    MeshDemoAppTest.out 
+    "src/demos/glad.c"
+    "src/demos/meshdemowindow.cpp"
+    )
+#target_link_libraries(final.out AssimpLib)
+
+target_link_libraries(MeshDemoAppTest.out glfwLib)
+
+
 install(TARGETS main.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS demoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
+install(TARGETS MeshDemoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")

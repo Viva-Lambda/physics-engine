@@ -1,6 +1,6 @@
 // demo application window
 #include <demos/app.hpp>
-#include <demos/shader.hpp>
+#include <demos/mesh.hpp>
 // #include <demos/ballistic.hpp>
 using namespace vivademos;
 
