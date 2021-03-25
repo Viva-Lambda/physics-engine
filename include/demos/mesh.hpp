@@ -8,28 +8,139 @@
 using namespace vivademos;
 namespace vivademos {
 
-class Mesh {
-  //
+class TriangleSurface {
 public:
-  Vertex *vertices;
+  static const unsigned int element_nb = 3;
+  Vertex p1;
+  Vertex p2;
+  Vertex p3;
+
+  unsigned int vertex_nb = element_nb;
+  const unsigned int index_nb = element_nb;
+  const unsigned int indices[element_nb] = {0, 1, 2};
   Texture *textures;
-  unsigned int *indices;
-  //
-  unsigned int vertex_nb;
-  unsigned int index_nb;
   unsigned int texture_nb;
-  //
   GLuint vao;
-  Mesh()
-      : vertices(nullptr), textures(nullptr),
-        indices(nullptr), vertex_nb(0), index_nb(0),
-        texture_nb(0) {}
-  Mesh(Vertex *vs, Texture *txts, unsigned int *inds,
-       unsigned int vnb, unsigned int inb, unsigned int tnb)
-      : vertices(vs), indices(inds), textures(txts),
-        vertex_nb(vnb), index_nb(inb), texture_nb(tnb) {
-    setupMesh();
+  TriangleSurface(const TriangleSurface &t) {
+    texture_nb = t.texture_nb;
+    if (texture_nb > 0) {
+      textures = new Texture[texture_nb];
+      for (unsigned int i = 0; i < texture_nb; i++) {
+        textures[i] = t.textures[i];
+      }
+    } else {
+      textures = nullptr;
+    }
+    p1 = t.p1;
+    p2 = t.p2;
+    p3 = t.p3;
+    vao = t.vao;
+    vbo = t.vbo;
+    ebo = t.ebo;
   }
+  TriangleSurface()
+      : textures(nullptr), texture_nb(0), vao(0) {}
+  void destroy() {
+    if (textures != nullptr)
+      delete[] textures;
+    vao = 0;
+    vbo = 0;
+    ebo = 0;
+  }
+  TriangleSurface(const Vertex &v1, const Vertex &v2,
+                  const Vertex &v3, Texture *txts,
+                  unsigned int tnb)
+      : textures(txts), texture_nb(tnb), p1(v1), p2(v2),
+        p3(v3) {
+    setup();
+  }
+  TriangleSurface(Vertex vs[element_nb], Texture *txts,
+                  unsigned int tnb)
+      : textures(txts), texture_nb(tnb), p1(vs[0]),
+        p2(vs[1]), p3(vs[2]) {
+    setup();
+  }
+
+  /**copy assignment operator*/
+  TriangleSurface &operator=(const TriangleSurface &t) {
+    //
+    p1 = t.p1;
+    p2 = t.p2;
+    p3 = t.p3;
+    vao = t.vao;
+    vbo = t.vbo;
+    ebo = t.ebo;
+    texture_nb = t.texture_nb;
+    if (texture_nb > 0) {
+      textures = new Texture[texture_nb];
+      for (unsigned int i = 0; i < texture_nb; i++) {
+        textures[i] = t.textures[i];
+      }
+    } else {
+      textures = nullptr;
+    }
+
+    return *this;
+  }
+
+private:
+  GLuint ebo, vbo;
+
+  void setup() {
+    // setup opengl friendly object
+    Vertex vertices[] = {p1, p2, p3};
+    //
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+    glGenBuffers(1, &ebo);
+
+    // bind vao
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    //
+    glBufferData(GL_ARRAY_BUFFER,
+                 vertex_nb * sizeof(Vertex), &vertices[0],
+                 GL_STATIC_DRAW);
+
+    // bind indices
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 index_nb * sizeof(unsigned int),
+                 &indices[0], GL_STATIC_DRAW);
+    //
+    // vertex pos
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+                          sizeof(Vertex), (void *)0);
+
+    // vertex normal
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+                          sizeof(Vertex),
+                          (void *)offsetof(Vertex, normal));
+    // texcoord
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(
+        2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+        (void *)offsetof(Vertex, texCoord));
+
+    // tangent
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(
+        3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+        (void *)offsetof(Vertex, tangent));
+    // bitangent
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(
+        4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+        (void *)offsetof(Vertex, bitangent));
+
+    //
+    glBindVertexArray(0);
+  }
+
+public:
   void bind_textures(Shader shdr) {
     unsigned int diffuseNb = 1;
     unsigned int specularNb = 1;
@@ -78,6 +189,7 @@ public:
       glBindTexture(GL_TEXTURE_2D, textures[i].id);
     }
   }
+
   void draw(Shader shdr) {
     // bind textures
     if (texture_nb > 0) {
@@ -90,239 +202,163 @@ public:
     //
     glActiveTexture(GL_TEXTURE0);
   }
+};
 
-private:
-  GLuint ebo, vbo;
+class Mesh {
+public:
+  unsigned int nb_triangles;
+  TriangleSurface *ts;
+  Mesh() : nb_triangles(0), ts(nullptr) {}
+  //~Mesh() { delete[] ts; }
 
-  void setupMesh() {
-    //
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
-    glGenBuffers(1, &ebo);
-
-    // bind vao
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-    //
-    glBufferData(GL_ARRAY_BUFFER,
-                 vertex_nb * sizeof(Vertex), &vertices[0],
-                 GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 index_nb * sizeof(unsigned int),
-                 &indices[0], GL_STATIC_DRAW);
-    //
-    // vertex pos
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(Vertex), (void *)0);
-
-    // vertex normal
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(Vertex),
-                          (void *)offsetof(Vertex, normal));
-    // texcoord
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(
-        2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-        (void *)offsetof(Vertex, texCoord));
-
-    // tangent
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(
-        3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-        (void *)offsetof(Vertex, tangent));
-    // bitangent
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(
-        4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-        (void *)offsetof(Vertex, bitangent));
-
-    //
-    glBindVertexArray(0);
+  Mesh(TriangleSurface *triangles, unsigned int nbt)
+      : nb_triangles(nbt) {
+    ts = new TriangleSurface[nb_triangles];
+    for (unsigned int i = 0; i < nb_triangles; i++) {
+      ts[i] = triangles[i];
+    }
+  }
+  void draw(Shader shdr) {
+    for (unsigned int i = 0; i < nb_triangles; i++) {
+      //
+      ts[i].draw(shdr);
+    }
+  }
+  void destroy() {
+    for (unsigned int i = 0; i < nb_triangles; i++) {
+      //
+      ts[i].destroy();
+    }
   }
 };
+
+/**Make a triangle surface*/
+TriangleSurface mk_triangle_surface(const glm::vec3 ps[3],
+                                    const glm::vec2 ts[3],
+                                    const glm::vec3 &n) {
+  //
+  Vertex *vs = new Vertex[TriangleSurface::element_nb];
+  mk_triangle_vertices(ps, ts, n, vs);
+  return TriangleSurface(vs, nullptr, 0);
+};
+TriangleSurface mk_triangle_surface(const glm::vec3 &p1,
+                                    const glm::vec3 &p2,
+                                    const glm::vec3 &p3,
+                                    const glm::vec2 &t1,
+                                    const glm::vec2 &t2,
+                                    const glm::vec2 &t3,
+                                    const glm::vec3 &n) {
+  const glm::vec3 ps[] = {p1, p2, p3};
+  const glm::vec2 ts[] = {t1, t2, t3};
+  return mk_triangle_surface(ps, ts, n);
+}
+
+TriangleSurface mk_triangle_surface(float vs[15],
+                                    float n[3]) {
+  glm::vec3 p1(vs[0], vs[1], vs[2]);
+  glm::vec2 t1(vs[3], vs[4]);
+  glm::vec3 p2(vs[5], vs[6], vs[7]);
+  glm::vec2 t2(vs[8], vs[9]);
+  glm::vec3 p3(vs[10], vs[11], vs[12]);
+  glm::vec2 t3(vs[13], vs[14]);
+  glm::vec3 norm(n[0], n[1], n[2]);
+
+  const glm::vec3 ps[] = {p1, p2, p3};
+  const glm::vec2 ts[] = {t1, t2, t3};
+  return mk_triangle_surface(ps, ts, norm);
+}
 
 /**Make a triangle mesh*/
 Mesh mk_triangle(const glm::vec3 ps[3],
                  const glm::vec2 ts[3],
                  const glm::vec3 &n) {
-  //
-  unsigned int vnb = 3;
-  Vertex *vs = new Vertex[vnb];
-  mk_triangle_vertices(ps, ts, n, vs);
-
-  unsigned int inds[] = {0, 1, 2};
-  return Mesh(vs, nullptr, inds, vnb, vnb, 0);
+  auto t = mk_triangle_surface(ps, ts, n);
+  return Mesh(&t, 1);
 };
 /**Make a cube mesh*/
 Mesh mk_cube() {
-  Vertex cube_vs[36];
-  unsigned int cube_indices[36];
   // front face
-  glm::vec3 front_normal(0.0f, 0.0f, -1.0f);
-  //
-  glm::vec3 front_btm_left(-1.0f, -1.0f, -1.0f);
-  glm::vec2 front_btm_left_tx(0.0f, 0.0f);
-  glm::vec3 front_btm_r(1.0f, -1.0f, -1.0f);
-  glm::vec2 front_btm_r_tx(1.0f, 0.0f);
-  glm::vec3 front_tp_left(-1.0f, 1.0f, -1.0f);
-  glm::vec2 front_tp_left_tx(0.0f, 1.0f);
-  glm::vec3 front_tp_r(1.0f, 1.0f, -1.0f);
-  glm::vec2 front_tp_r_tx(1.0f, 1.0f);
-  Vertex front_face[6];
-  unsigned int front_indices[6];
-  mk_rectangle_vertices(
-      front_btm_left, front_tp_r, front_tp_left,
-      front_btm_r, front_btm_left_tx, front_tp_r_tx,
-      front_tp_left_tx, front_btm_r_tx, front_normal,
-      front_face, front_indices);
-  unsigned int oset = 0;
-  unsigned int stride = 6;
-  for (unsigned int i = 0; i < stride; i++) {
-    cube_vs[i + oset] = front_face[i];
-    cube_indices[i + oset] = i + oset;
-  }
-  oset += 6;
+  float s1n[] = {0.0f, 0.0f, -1.0f};
+  float s2n[] = {0.0f, 0.0f, 1.0f};
+  float s3n[] = {-1.0f, 0.0f, 0.0f};
+  float s4n[] = {1.0f, 0.0f, 0.0f};
+  float s5n[] = {0.0f, -1.0f, 0.0f};
+  float s6n[] = {0.0f, 1.0f, 0.0f};
 
-  // left face
-  glm::vec3 left_normal(0.0f, 0.0f, 1.0f);
-  //
-  glm::vec3 left_btm_left(-1.0f, -1.0f, 1.0f);
-  glm::vec2 left_btm_left_tx(0.0f, 0.0f);
-  glm::vec3 left_btm_r(1.0f, -1.0f, 1.0f);
-  glm::vec2 left_btm_r_tx(1.0f, 0.0f);
-  glm::vec3 left_tp_left(-1.0f, 1.0f, 1.0f);
-  glm::vec2 left_tp_left_tx(0.0f, 1.0f);
-  glm::vec3 left_tp_r(1.0f, 1.0f, 1.0f);
-  glm::vec2 left_tp_r_tx(1.0f, 1.0f);
+  // positions        // texture coords
+  float t1[] = {
+      -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,  0.5f, -0.5f, -0.5f,
+      1.0f,  0.0f,  0.5f,  0.5f, -0.5f, 1.0f, 1.0f,
+  };
+  auto tri1 = mk_triangle_surface(t1, s1n);
+  float tt1[] = {
+      0.5f, 0.5f, -0.5f, 1.0f,  1.0f,  -0.5f, 0.5f, -0.5f,
+      0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,
+  };
+  auto tri2 = mk_triangle_surface(tt1, s1n);
 
-  Vertex left_face[6];
-  unsigned int left_indices[6];
-  mk_rectangle_vertices(
-      left_btm_left, left_tp_r, left_tp_left, left_btm_r,
-      left_btm_left_tx, left_tp_r_tx, left_tp_left_tx,
-      left_btm_r_tx, left_normal, left_face, left_indices);
+  float t2[] = {
+      -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.5f, -0.5f, 0.5f,
+      1.0f,  0.0f,  0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+  };
 
-  for (unsigned int i = 0; i < stride; i++) {
-    cube_vs[i + oset] = left_face[i];
-    cube_indices[i + oset] = i + oset;
-  }
-  oset += 6;
+  auto tri3 = mk_triangle_surface(t2, s2n);
+  float tt2[] = {
+      0.5f, 0.5f, 0.5f,  1.0f,  1.0f, -0.5f, 0.5f, 0.5f,
+      0.0f, 1.0f, -0.5f, -0.5f, 0.5f, 0.0f,  0.0f,
+  };
+  auto tri4 = mk_triangle_surface(tt2, s2n);
 
-  // right face
-  glm::vec3 right_normal(-1.0f, 0.0f, 0.0f);
-  //
-  glm::vec3 right_btm_left(-1.0f, -1.0f, -1.0f);
-  glm::vec2 right_btm_left_tx(0.0f, 1.0f);
-  glm::vec3 right_btm_r(-1.0f, -1.0f, 1.0f);
-  glm::vec2 right_btm_r_tx(0.0f, 0.0f);
-  glm::vec3 right_tp_left(-1.0f, 1.0f, -1.0f);
-  glm::vec2 right_tp_left_tx(1.0f, 1.0f);
-  glm::vec3 right_tp_r(-1.0f, 1.0f, 1.0f);
-  glm::vec2 right_tp_r_tx(1.0f, 0.0f);
-  Vertex right_face[6];
-  unsigned int right_indices[6];
-  mk_rectangle_vertices(
-      right_btm_left, right_tp_r, right_tp_left,
-      right_btm_r, right_btm_left_tx, right_tp_r_tx,
-      right_tp_left_tx, right_btm_r_tx, right_normal,
-      right_face, right_indices);
+  float t3[] = {
+      -0.5f, 0.5f, 0.5f,  1.0,   0.0f,  -0.5f, 0.5f, -0.5f,
+      1.0f,  1.0f, -0.5f, -0.5f, -0.5f, 0.0f,  1.0f,
+  };
+  auto tri5 = mk_triangle_surface(t3, s3n);
 
-  for (unsigned int i = 0; i < stride; i++) {
-    cube_vs[i + oset] = right_face[i];
-    cube_indices[i + oset] = i + oset;
-  }
-  oset += 6;
+  float tt3[] = {
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f,
+      0.0f,  0.0f,  -0.5f, 0.5f, 0.5f, 1.0f,  0.0f,
+  };
+  auto tri6 = mk_triangle_surface(tt3, s3n);
 
-  // bottom face
-  glm::vec3 bottom_normal(1.0f, 0.0f, 1.0f);
-  //
-  glm::vec3 bottom_btm_left(1.0f, -1.0f, 1.0f);
-  glm::vec2 bottom_btm_left_tx(1.0f, 0.0f);
+  float t4[] = {
+      0.5f, 0.5f, 0.5f, 1.0f,  0.0f,  0.5f, 0.5f, -0.5f,
+      1.0f, 1.0f, 0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  };
+  auto tri7 = mk_triangle_surface(t4, s4n);
+  float tt4[] = {
+      0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, -0.5f, 0.5f,
+      0.0f, 0.0f,  0.5f,  0.5f, 0.5f, 1.0f, 0.0f,
+  };
+  auto tri8 = mk_triangle_surface(tt4, s4n);
 
-  glm::vec3 bottom_btm_r(1.0f, -1.0f, -1.0f);
-  glm::vec2 bottom_btm_r_tx(0.0f, 1.0f);
+  float t5[] = {
+      -0.5f, -0.5f, -0.5f, 0.0f,  1.0f, 0.5f, -0.5f, -0.5f,
+      1.0f,  1.0f,  0.5f,  -0.5f, 0.5f, 1.0f, 0.0f,
+  };
 
-  glm::vec3 bottom_tp_left(1.0f, 1.0f, 1.0f);
-  glm::vec2 bottom_tp_left_tx(1.0f, 0.0f);
+  auto tri9 = mk_triangle_surface(t5, s5n);
 
-  glm::vec3 bottom_tp_r(1.0f, 1.0f, -1.0f);
-  glm::vec2 bottom_tp_r_tx(1.0f, 1.0f);
+  float tt5[] = {
+      0.5f, -0.5f, 0.5f,  1.0f,  0.0f,  -0.5f, -0.5f, 0.5f,
+      0.0f, 0.0f,  -0.5f, -0.5f, -0.5f, 0.0f,  1.0f,
+  };
+  auto tri10 = mk_triangle_surface(tt5, s5n);
 
-  Vertex bottom_face[6];
-  unsigned int bottom_indices[6];
-  mk_rectangle_vertices(
-      bottom_btm_left, bottom_tp_r, bottom_tp_left,
-      bottom_btm_r, bottom_btm_left_tx, bottom_tp_r_tx,
-      bottom_tp_left_tx, bottom_btm_r_tx, bottom_normal,
-      bottom_face, bottom_indices);
+  float t6[] = {
+      -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.5f, 0.5f, -0.5f,
+      1.0f,  1.0f, 0.5f,  0.5f, 0.5f, 1.0f, 0.0f,
+  };
 
-  for (unsigned int i = 0; i < stride; i++) {
-    cube_vs[i + oset] = bottom_face[i];
-    cube_indices[i + oset] = i + oset;
-  }
-  oset += 6;
+  auto tri11 = mk_triangle_surface(t6, s6n);
 
-  // top face
-  glm::vec3 top_normal(0.0f, -1.0f, 0.0f);
-  //
-  glm::vec3 top_btm_left(1.0f, -1.0f, 1.0f);
-  glm::vec2 top_btm_left_tx(1.0f, 0.0f);
-
-  glm::vec3 top_btm_r(-1.0f, -1.0f, 1.0f);
-  glm::vec2 top_btm_r_tx(0.0f, 0.0f);
-
-  glm::vec3 top_tp_left(1.0f, -1.0f, -1.0f);
-  glm::vec2 top_tp_left_tx(1.0f, 1.0f);
-
-  glm::vec3 top_tp_r(-1.0f, -1.0f, -1.0f);
-  glm::vec2 top_tp_r_tx(0.0f, 1.0f);
-
-  Vertex top_face[6];
-  unsigned int top_indices[6];
-  mk_rectangle_vertices(
-      top_btm_left, top_tp_r, top_tp_left, top_btm_r,
-      top_btm_left_tx, top_tp_r_tx, top_tp_left_tx,
-      top_btm_r_tx, top_normal, top_face, top_indices);
-
-  for (unsigned int i = 0; i < stride; i++) {
-    cube_vs[i + oset] = top_face[i];
-    cube_indices[i + oset] = i + oset;
-  }
-  oset += 6;
-
-  // some face
-  glm::vec3 some_normal(0.0f, 1.0f, 0.0f);
-  //
-  glm::vec3 some_btm_left(-1.0f, 1.0f, 1.0f);
-  glm::vec2 some_btm_left_tx(0.0f, 0.0f);
-
-  glm::vec3 some_btm_r(1.0f, 1.0f, 1.0f);
-  glm::vec2 some_btm_r_tx(1.0f, 0.0f);
-
-  glm::vec3 some_tp_left(-1.0f, 1.0f, -1.0f);
-  glm::vec2 some_tp_left_tx(0.0f, 1.0f);
-
-  glm::vec3 some_tp_r(1.0f, 1.0f, -1.0f);
-  glm::vec2 some_tp_r_tx(1.0f, 1.0f);
-
-  Vertex some_face[6];
-  unsigned int some_indices[6];
-  mk_rectangle_vertices(
-      some_btm_left, some_tp_r, some_tp_left, some_btm_r,
-      some_btm_left_tx, some_tp_r_tx, some_tp_left_tx,
-      some_btm_r_tx, some_normal, some_face, some_indices);
-
-  for (unsigned int i = 0; i < stride; i++) {
-    cube_vs[i + oset] = some_face[i];
-    cube_indices[i + oset] = i + oset;
-  }
-  oset += 6;
-  return Mesh(cube_vs, nullptr, cube_indices, oset, oset,
-              0);
+  float tt6[] = {0.5f,  0.5f, 0.5f,  1.0f, 0.0f,
+                 -0.5f, 0.5f, 0.5f,  0.0f, 0.0f,
+                 -0.5f, 0.5f, -0.5f, 0.0f, 1.0f};
+  auto tri12 = mk_triangle_surface(tt6, s6n);
+  TriangleSurface tris[] = {tri1, tri2,  tri3,  tri4,
+                            tri5, tri6,  tri7,  tri8,
+                            tri9, tri10, tri11, tri12};
+  return Mesh(tris, 12);
 };
 };

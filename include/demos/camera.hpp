@@ -3,7 +3,12 @@
 #include <external.hpp>
 
 namespace vivademos {
-enum Camera_Movement { FORWARD, BACKWARD, LEFT, RIGHT };
+enum class Camera_Movement {
+  FORWARD,
+  BACKWARD,
+  LEFT,
+  RIGHT
+};
 
 struct Ray {
   glm::vec3 origin;
@@ -53,7 +58,7 @@ public:
          glm::vec3 Front = glm::vec3(0.0f, 0.0f, -1.0f),
          float Speed = SPEED, float Sens = SENSITIVITY,
          float Zoom = ZOOM);
-  void processKeyBoardRotate(Camera_Movement direction,
+  void processKeyboardRotate(Camera_Movement direction,
                              float deltaTime);
   virtual void processKeyboard(Camera_Movement direction,
                                float deltaTime);
@@ -130,16 +135,16 @@ void Camera::processKeyboard(Camera_Movement direction,
                              float deltaTime) {
   float velocity = movementSpeed * deltaTime;
   switch (direction) {
-  case FORWARD:
+  case Camera_Movement::FORWARD:
     pos += front * velocity;
     break;
-  case BACKWARD:
+  case Camera_Movement::BACKWARD:
     pos -= front * velocity;
     break;
-  case RIGHT:
+  case Camera_Movement::RIGHT:
     pos += right * velocity;
     break;
-  case LEFT:
+  case Camera_Movement::LEFT:
     pos -= right * velocity;
     break;
   }
@@ -193,21 +198,22 @@ void Camera::processMouseMovement(float xoffset,
 
   updateCameraVectors();
 }
-void Camera::processKeyBoardRotate(
+
+void Camera::processKeyboardRotate(
     Camera_Movement direction, float deltaTime) {
 
   deltaTime *= movementSpeed;
   switch (direction) {
-  case FORWARD:
+  case Camera_Movement::FORWARD:
     pitch += deltaTime;
     break;
-  case BACKWARD:
+  case Camera_Movement::BACKWARD:
     pitch -= deltaTime;
     break;
-  case RIGHT:
+  case Camera_Movement::RIGHT:
     yaw += deltaTime;
     break;
-  case LEFT:
+  case Camera_Movement::LEFT:
     yaw -= deltaTime;
     break;
   }

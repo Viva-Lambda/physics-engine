@@ -56,7 +56,6 @@ public:
       glfwTerminate();
       return -1;
     }
-    default_map();
 
     // set default viewport
     glViewport(0, 0, width,
@@ -75,6 +74,7 @@ public:
   }
   /** display application content*/
   virtual int display() {
+    default_map();
     while (!glfwWindowShouldClose(window)) {
       update();
     }
