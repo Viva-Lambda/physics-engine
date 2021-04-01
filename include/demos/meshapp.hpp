@@ -13,10 +13,20 @@ namespace vivademos {
 class MeshDemoApp : public DemoApp {
 protected:
   // window size related
-  Mesh mesh;
+  Mesh cube_mesh;
   Mesh lamp;
+  Mesh plane_mesh;
+
+  //
   Shader obj_shader;
+  Shader depth_shader;
   Shader lamp_shader;
+
+  // depth map related
+  const unsigned int SHADOW_WIDTH = 1024;
+  const unsigned int SHADOW_HEIGHT = 1024;
+  GLuint depth_map_fbo;
+  GLuint depth_texture;
 
   // SpotLight light = SpotLight(glm::vec3(1.0f),
   //                            glm::vec3(0.2f, 1.0f, 0.5f),
@@ -35,6 +45,8 @@ protected:
   glm::vec3 transVec = glm::vec3(1.0);
   glm::mat4 modelMat = glm::mat4(1.0f);
   glm::mat4 lampMat = glm::mat4(1.0f);
+  float near_plane_dist = 0.1f;
+  float far_plane_dist = 200.0f;
 
 public:
   MeshDemoApp() {}
@@ -76,14 +88,10 @@ public:
     }
   }
 
-  std::string get_title() override { return "mesh viewer"; }
-  int init_graphics() override {
-    DemoApp::init_graphics();
-    glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
-    mesh = mk_cube();
-    lamp = mk_cube();
-
-    // set lamp shader values
+  std::string get_title() override {
+    return "cube mesh viewer";
+  }
+  int init_shaders() {
     lamp_shader = mk_pointlight_lamp_shader();
     lamp_shader.useProgram();
     lamp_shader.setVec3Uni("lightColor", light.emitColor);
@@ -97,24 +105,89 @@ public:
     obj_shader.setFloatUni("ambientCoeff", ambientCoeff);
     obj_shader.setVec3Uni("attC", attc);
     obj_shader.setVec3Uni("diffColor",
-                          glm::vec3(0.3, 0.3, 0.3));
+                          glm::vec3(0.8, 0.6, 0.3));
+    // texture
+    obj_shader.setIntUni("shadowMap", 1);
+
+    // depth shader for shadows
+    depth_shader = mk_depth_shader();
     set_view();
     return 0;
+  }
+
+  virtual void set_scene_objects() {
+    cube_mesh = mk_cube();
+    lamp = mk_cube();
+    plane_mesh = mk_plane();
+  }
+
+  virtual void set_depth_fbo() {
+    glGenFramebuffers(1, &depth_map_fbo);
+    glGenTextures(1, &depth_texture);
+
+    glBindTexture(GL_TEXTURE_2D, depth_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+                 SHADOW_WIDTH, SHADOW_HEIGHT, 0,
+                 GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                    GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                    GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                    GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                    GL_CLAMP_TO_BORDER);
+    float borderColor[] = {1.0, 1.0, 1.0, 1.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR,
+                     borderColor);
+    // attach depth texture as FBO's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER,
+                           GL_DEPTH_ATTACHMENT,
+                           GL_TEXTURE_2D, depth_texture, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  }
+  virtual void set_related() {
+    set_scene_objects();
+    set_depth_fbo();
+  }
+
+  int init_graphics() override {
+    DemoApp::init_graphics();
+    set_related();
+    // init shaders
+    return init_shaders();
   }
   void set_view() override {
     // setting model, view, projection
 
-    glm::mat4 projection = glm::perspective(
-        glm::radians(camera.zoom),
-        (float)width / (float)height, 0.1f, 100.0f);
+    glm::mat4 projection =
+        glm::perspective(glm::radians(camera.zoom),
+                         (float)width / (float)height,
+                         near_plane_dist, far_plane_dist);
     glm::mat4 viewMat = camera.getViewMatrix();
     glm::vec3 viewPos = camera.pos;
     // render cube object
+
+    glm::mat4 lightProj, lightSpaceMat, lightView;
+    lightView = glm::lookAt(light.position, glm::vec3(0.0),
+                            glm::vec3(0.0, 1.0, 0.0));
+    lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f,
+                           1.0f, 7.5f);
+    lightSpaceMat = lightProj * lightView;
+    depth_shader.useProgram();
+    depth_shader.setMat4Uni("lightSpaceMatrix",
+                            lightSpaceMat);
+    // depth_shader.setMat4Uni("model", modelMat);
 
     obj_shader.useProgram();
     obj_shader.setMat4Uni("view", viewMat);
     obj_shader.setMat4Uni("model", modelMat);
     obj_shader.setMat4Uni("projection", projection);
+    obj_shader.setMat4Uni("lightSpaceMatrix",
+                          lightSpaceMat);
     // obj_shader.setVec3Uni("viewPos", viewPos);
     obj_shader.setVec3Uni("lightPos", light.position);
     obj_shader.setFloatUni("lightIntensity", 1.0f);
@@ -128,7 +201,6 @@ public:
 
   /** display application content*/
   int display() override {
-    default_map();
     print_keys();
     while (!glfwWindowShouldClose(window)) {
       update();
@@ -136,10 +208,43 @@ public:
     destroy_graphics();
     return 0;
   }
-  void update() override {
+  virtual void draw_objects() {
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    mesh.draw(obj_shader);
+    // render depth
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    plane_mesh.draw(depth_shader);
+    cube_mesh.draw(depth_shader);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // render object
+
+    // reset viewport
+    glViewport(0, 0, width, height);
+    glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    obj_shader.useProgram();
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depth_texture);
+
+    plane_mesh.draw(obj_shader);
+    cube_mesh.draw(obj_shader);
+    glBindTexture(GL_TEXTURE_2D, 0);
     // lamp.draw(lamp_shader);
+  }
+  void clear_frame() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  }
+  void update() override {
+    clear_frame();
+    draw_objects();
+    set_view();
+    update_glfw();
+  }
+  void update_glfw() {
     process_input();
     glfwPollEvents();
     glfwSwapBuffers(window);
@@ -159,6 +264,7 @@ public:
     D_CHECK_MSG(it != key_map.end(), "key not in key maps");
     query_key(key);
   }
+  virtual void process_other_keys() {}
   /** process certain keys given in key map */
   void process_input() override {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
@@ -174,7 +280,8 @@ public:
     if (!is_light_locked) {
       moveLight();
     }
-    set_view();
+    // other child object keys
+    process_other_keys();
 
     if ((glfwGetKey(window, GLFW_KEY_SPACE) ==
          GLFW_PRESS) &&
@@ -188,7 +295,7 @@ public:
     last_time = current;
     return d;
   }
-  void moveCamera() {
+  virtual void moveCamera() {
     //
     auto deltaTime = dtime();
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
@@ -224,7 +331,7 @@ public:
           Camera_Movement::BACKWARD, 0.7f);
     }
   }
-  void moveLight() {
+  virtual void moveLight() {
     // move light
     auto deltaTime = 0.01f;
     if (glfwGetKey(window, GLFW_KEY_KP_1) == GLFW_PRESS) {
@@ -254,49 +361,55 @@ public:
     }
   }
 
-  void moveObject() {
+  virtual void set_model_mat(const glm::mat4 &mmat,
+                             const glm::vec3 &trans) {
+
+    modelMat = glm::translate(mmat, trans);
+  }
+
+  virtual void moveObject() {
     //
     auto deltaTime = dtime();
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
       transVec.x = deltaTime;
       transVec.y = 0.0f;
       transVec.z = 0.0f;
-      modelMat = glm::translate(modelMat, transVec);
+      set_model_mat(modelMat, transVec);
     }
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
       transVec.x = -deltaTime;
       transVec.y = 0.0f;
       transVec.z = 0.0f;
 
-      modelMat = glm::translate(modelMat, transVec);
+      set_model_mat(modelMat, transVec);
     }
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
       transVec.y = deltaTime;
       transVec.x = 0.0f;
       transVec.z = 0.0f;
 
-      modelMat = glm::translate(modelMat, transVec);
+      set_model_mat(modelMat, transVec);
     }
     if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
       transVec.y = -deltaTime;
       transVec.x = 0.0f;
       transVec.z = 0.0f;
 
-      modelMat = glm::translate(modelMat, transVec);
+      set_model_mat(modelMat, transVec);
     }
     if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
       transVec.z = deltaTime;
       transVec.y = 0.0f;
       transVec.x = 0.0f;
 
-      modelMat = glm::translate(modelMat, transVec);
+      set_model_mat(modelMat, transVec);
     }
     if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
       transVec.z = -deltaTime;
       transVec.y = 0.0f;
       transVec.x = 0.0f;
 
-      modelMat = glm::translate(modelMat, transVec);
+      set_model_mat(modelMat, transVec);
     }
   }
   void process_toggles() {
@@ -310,16 +423,15 @@ public:
       toggle_object_movement();
     }
   }
-  void print_keys() {
-    std::cout << "Print Keys:" << std::endl;
-    std::cout << "SPACE + V" << std::endl;
-    std::cout << "-------------------------" << std::endl;
+  virtual void print_toggle_movement_keys() const {
     std::cout << "Toggle Movement:" << std::endl;
     std::cout << "-------------------------" << std::endl;
     std::cout << "key pad 7 camera" << std::endl;
     std::cout << "key pad 8 light" << std::endl;
     std::cout << "key pad 9 object" << std::endl;
     std::cout << "-------------------------" << std::endl;
+  }
+  virtual void print_move_rotate_camera_keys() const {
     std::cout << "Move Rotate Camera Keys:" << std::endl;
     std::cout << "-------------------------" << std::endl;
     std::cout << "W/Z move forward" << std::endl;
@@ -331,6 +443,8 @@ public:
     std::cout << "K rotate downward" << std::endl;
     std::cout << "L rotate upward" << std::endl;
     std::cout << "-------------------------" << std::endl;
+  }
+  virtual void print_move_light_keys() const {
     std::cout << "Move Light Keys:" << std::endl;
     std::cout << "-------------------------" << std::endl;
     std::cout << "key pad 1 move upward" << std::endl;
@@ -340,6 +454,8 @@ public:
     std::cout << "key pad 5 move forward" << std::endl;
     std::cout << "key pad 6 move backward" << std::endl;
     std::cout << "-------------------------" << std::endl;
+  }
+  virtual void print_move_obj_keys() {
     std::cout << "Move Object Keys:" << std::endl;
     std::cout << "-------------------------" << std::endl;
     std::cout << "E move left" << std::endl;
@@ -349,6 +465,15 @@ public:
     std::cout << "I move forward" << std::endl;
     std::cout << "O move backward" << std::endl;
     std::cout << "-------------------------" << std::endl;
+  }
+  void print_keys() {
+    std::cout << "Print Keys:" << std::endl;
+    std::cout << "SPACE + V" << std::endl;
+    std::cout << "-------------------------" << std::endl;
+    print_toggle_movement_keys();
+    print_move_rotate_camera_keys();
+    print_move_light_keys();
+    print_move_obj_keys();
   }
 
   void render_text(int x, int y, std::string txt,

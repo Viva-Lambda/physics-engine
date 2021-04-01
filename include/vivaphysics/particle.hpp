@@ -13,10 +13,10 @@ namespace vivaphysics {
 class Particle {
   //
 protected:
-  Vector3 position;
-  Vector3 velocity;
-  Vector3 acceleration;
-  Vector3 accumulated_force;
+  point3 position;
+  v3 velocity;
+  v3 acceleration;
+  v3 accumulated_force;
 
   /**
     we are using the inverse of the mass for numerical
@@ -87,51 +87,50 @@ public:
 
   /**\name position related*/
   /**@{*/
-  void set_position(const Vector3 &v) { position = v; }
+  void set_position(const v3 &v) { position = v; }
   void set_position(const real &x, const real &y,
                     const real &z) {
-    position = Vector3(x, y, z);
+    position = v3(x, y, z);
   }
-  Vector3 get_position() const { return position; }
-  void get_position(Vector3 &pos) const { pos = position; }
+  v3 get_position() const { return position; }
+  void get_position(v3 &pos) const { pos = position; }
   /**@}*/
 
   /**\name velocity related*/
   /**@{*/
-  void set_velocity(const Vector3 &v) { velocity = v; }
+  void set_velocity(const v3 &v) { velocity = v; }
   void set_velocity(const real &x, const real &y,
                     const real &z) {
-    velocity = Vector3(x, y, z);
+    velocity = v3(x, y, z);
   }
-  Vector3 get_velocity() const { return velocity; }
+  v3 get_velocity() const { return velocity; }
   /**@}*/
 
   /**\name acceleration related*/
   /**@{*/
-  void set_acceleration(const Vector3 &v) {
-    acceleration = v;
-  }
+  void set_acceleration(const v3 &v) { acceleration = v; }
   void set_acceleration(const real &x, const real &y,
                         const real &z) {
-    acceleration = Vector3(x, y, z);
+    acceleration = v3(x, y, z);
   }
-  Vector3 get_acceleration() const { return acceleration; }
+  v3 get_acceleration() const { return acceleration; }
   /**@}*/
 
   /**\name accumulated_force related*/
   /**@{*/
-  void set_accumulated_force(const Vector3 &v) {
+  void set_accumulated_force(const v3 &v) {
     accumulated_force = v;
   }
   void set_accumulated_force(const real &x, const real &y,
                              const real &z) {
-    accumulated_force = Vector3(x, y, z);
+    accumulated_force = v3(x, y, z);
   }
-  Vector3 get_accumulated_force() const {
+  v3 get_accumulated_force() const {
     return accumulated_force;
   }
-  Vector3 add_force(const Vector3 &v) {
-    accumulated_force += v;
+  v3 add_force(const v3 &v) {
+    accumulated_force =
+        v3(v.to_glm() + accumulated_force.to_glm());
   }
   void clear_accumulator() { accumulated_force.clear(); }
   /**@}*/

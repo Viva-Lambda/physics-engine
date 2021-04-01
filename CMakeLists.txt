@@ -67,7 +67,19 @@ add_executable(
 
 target_link_libraries(MeshDemoAppTest.out glfwLib)
 
+# ballistics demo
+add_executable(
+    BallisticDemo.out 
+    "src/demos/glad.c"
+    "src/demos/ballisticdemo.cpp"
+    )
+#target_link_libraries(final.out AssimpLib)
+
+target_link_libraries(BallisticDemo.out glfwLib)
+
+
 
 install(TARGETS main.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS demoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS MeshDemoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
+install(TARGETS BallisticDemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")

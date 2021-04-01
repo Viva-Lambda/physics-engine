@@ -1,0 +1,38 @@
+Print Keys:
+SPACE + V
+-------------------------
+Toggle Movement:
+-------------------------
+key pad 7 camera
+key pad 8 light
+key pad 9 object
+-------------------------
+Move Rotate Camera Keys:
+-------------------------
+W/Z move forward
+A/Q move left
+S move backward
+D move right
+H rotate left
+J rotate right
+K rotate downward
+L rotate upward
+-------------------------
+Move Light Keys:
+-------------------------
+key pad 1 move upward
+key pad 2 move downward
+key pad 3 move right
+key pad 4 move left
+key pad 5 move forward
+key pad 6 move backward
+-------------------------
+Move Object Keys:
+-------------------------
+E move left
+R move right
+T move up
+Y move down
+I move forward
+O move backward
+-------------------------

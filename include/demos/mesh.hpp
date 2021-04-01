@@ -5,7 +5,10 @@
 #include <demos/texture.hpp>
 #include <demos/vertex.hpp>
 #include <external.hpp>
+#include <vivaphysics/particle.hpp>
+
 using namespace vivademos;
+
 namespace vivademos {
 
 class TriangleSurface {
@@ -218,6 +221,8 @@ public:
       ts[i] = triangles[i];
     }
   }
+  Mesh(const Mesh &m)
+      : ts(m.ts), nb_triangles(m.nb_triangles) {}
   void draw(Shader shdr) {
     for (unsigned int i = 0; i < nb_triangles; i++) {
       //
@@ -229,6 +234,32 @@ public:
       //
       ts[i].destroy();
     }
+  }
+};
+
+enum ShotType {
+  UNUSED = 0,
+  PISTOL = 1,
+  ARTILLERY = 2,
+  FIREBALL = 3,
+  LASER = 4
+};
+
+class AmmoRound : public Mesh {
+public:
+  vivaphysics::Particle particle;
+  ShotType stype;
+  unsigned int start_time;
+  AmmoRound() : Mesh() {}
+  AmmoRound(TriangleSurface *triangles, unsigned int nbt,
+            ShotType st)
+      : Mesh(triangles, nbt), stype(st) {}
+  AmmoRound(const Mesh &m) : Mesh(m), stype(UNUSED) {}
+  glm::mat4 set_model_mat(glm::mat4 mmat) const {
+    vivaphysics::point3 pos;
+    particle.get_position(pos);
+    auto posv = pos.to_glm();
+    return glm::translate(mmat, posv);
   }
 };
 
@@ -361,4 +392,40 @@ Mesh mk_cube() {
                             tri9, tri10, tri11, tri12};
   return Mesh(tris, 12);
 };
+
+Mesh mk_plane() {
+  // from learnopengl
+  // ------------------------------------------------------------------
+  glm::vec3 ftri_pos[3] = {
+      //
+      glm::vec3(25.0f, -0.5f, 25.0f),
+      glm::vec3(-25.0f, -0.5f, 25.0f),
+      glm::vec3(-25.0f, -0.5f, -25.0f)};
+  glm::vec2 ftri_tex[3] = {
+      glm::vec2(25.0f, 0.0f), glm::vec2(0.0f, 0.0f),
+      glm::vec2(0.0f, 25.0f),
+  };
+  glm::vec3 f_norm = glm::vec3(0.0f, 1.0f, 0.0f);
+  //
+  glm::vec3 stri_pos[3] = {glm::vec3(25.0f, -0.5f, 25.0f),
+                           glm::vec3(-25.0f, -0.5f, -25.0f),
+                           glm::vec3(25.0f, -0.5f, -25.0f)};
+  glm::vec2 stri_tex[3] = {glm::vec2(25.0f, 0.0f),
+                           glm::vec2(0.0f, 25.0f),
+                           glm::vec2(25.0f, 25.0f)};
+  glm::vec3 s_norm = glm::vec3(0.0f, 1.0f, 0.0f);
+
+  auto tri1 =
+      mk_triangle_surface(ftri_pos, ftri_tex, f_norm);
+  auto tri2 =
+      mk_triangle_surface(stri_pos, stri_tex, s_norm);
+  TriangleSurface tris[] = {tri1, tri2};
+  return Mesh(tris, 2);
+}
+
+/** make cube ammo*/
+AmmoRound mk_cube_ammo() {
+  auto mesh = mk_cube();
+  return AmmoRound(mesh);
+}
 };
