@@ -106,13 +106,27 @@ public:
     lamp = SimpleShape(1, false, ShapeChoice::LAMP);
     plane = SimpleShape(1, false, ShapeChoice::PLANE);
   }
-  void draw_to_depth_fbo() override {
+  void render_scene_depth() override {
+    depth_shader.useProgram();
+    depth_shader.setMat4Uni("lightSpaceMatrix",
+                            lightSpaceMatrix);
+    glm::mat4 identityModel = glm::mat4(1.0f);
 
+    // draw scene from light's perspective
+    modelMat = ammo.get_model_mat();
+    depth_shader.setMat4Uni("model", modelMat);
+    ammo.draw();
+
+    depth_shader.setMat4Uni("model", identityModel);
+    plane.draw();
+
+    depth_shader.setMat4Uni("model", lampMat);
+    lamp.draw();
   }
   void draw_objects() override {
     fixed_update();
-    auto mat = ammo.get_model_mat();
-    ammo.draw();
+    draw_to_depth_fbo();
+    reset_frame();
   }
 
   void process_other_keys() override {

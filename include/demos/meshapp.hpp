@@ -202,29 +202,13 @@ public:
     destroy_graphics();
     return 0;
   }
-  virtual void draw_to_depth_fbo() {
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // render depth
-
+  /** \brief render scene from light's perspective*/
+  virtual void render_scene_depth() {
     depth_shader.useProgram();
     depth_shader.setMat4Uni("lightSpaceMatrix",
                             lightSpaceMatrix);
     glm::mat4 identityModel = glm::mat4(1.0f);
 
-    // lightModel = glm::translate(lightModel,
-    // light.position);
-    depth_shader.setMat4Uni("model", modelMat);
-
-    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    depth_shader.setMat4Uni("lightSpaceMatrix",
-                            lightSpaceMatrix);
-
-    // lightModel = glm::translate(lightModel,
-    // light.position);
     // draw scene from light's perspective
     depth_shader.setMat4Uni("model", modelMat);
     cube.draw();
@@ -234,28 +218,25 @@ public:
 
     depth_shader.setMat4Uni("model", lampMat);
     lamp.draw();
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
   }
-  virtual void draw_objects() {
-    draw_to_depth_fbo();
-
-    // render object
-
-    // reset viewport
-    glViewport(0, 0, width, height);
-    glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
+  virtual void draw_to_depth_fbo() {
+    // render to depth fbo
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // render objects
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    render_scene_depth();
+
+    // lightModel = glm::translate(lightModel,
+    // light.position);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  }
+  virtual void set_object_vp() {
     obj_shader.useProgram();
-
-    // bind depth texture
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, depth_texture);
-
-    // set mvp
     obj_shader.setMat4Uni("view", viewMat);
-    obj_shader.setMat4Uni("model", modelMat);
     obj_shader.setMat4Uni("projection", projection);
 
     // set light space matrix for shadow rendering
@@ -266,22 +247,33 @@ public:
     // computation
     obj_shader.setVec3Uni("lightPos", light.position);
     obj_shader.setFloatUni("lightIntensity", 1.0f);
+  }
+
+  virtual void render_scene_objects() {
+    // draw objects that need to be drawn
     obj_shader.setVec3Uni("diffColor",
                           glm::vec3(0.2, 0.7, 0.2));
 
-    // draw objects that need to be drawn
+    obj_shader.setMat4Uni("model", modelMat);
     cube.draw();
 
     // draw the plane
+    glm::mat4 identityModel = glm::mat4(1.0f);
+
     obj_shader.setMat4Uni("model", identityModel);
     obj_shader.setVec3Uni("diffColor",
                           glm::vec3(0.9, 0.8, 0.6));
     plane.draw();
 
-    lampMat = glm::translate(lampMat, light.position);
-
     //
     glBindTexture(GL_TEXTURE_2D, 0);
+  }
+  virtual void render_lamp() {
+    lamp_shader.useProgram();
+
+    lampMat = glm::mat4(1.0f);
+    lampMat = glm::scale(lampMat, glm::vec3(0.5f));
+    lampMat = glm::translate(lampMat, light.position);
 
     // draw lamp
     lamp_shader.useProgram();
@@ -295,13 +287,39 @@ public:
 
     //
     lamp.draw();
+  }
+  virtual void draw_objects() {
+    draw_to_depth_fbo();
+
+    // render object
+
+    // reset viewport
+    reset_frame();
+
+    // render objects
+    obj_shader.useProgram();
+
+    // bind depth texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, depth_texture);
+
+    // set mvp
+    set_object_vp();
+
+    render_scene_objects();
+
+    render_lamp();
+
     //
   }
   void clear_frame() {
+    glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
+  void reset_frame() { glViewport(0, 0, width, height); clear_frame();}
   void update() override {
-    clear_frame();
+    reset_frame();
     draw_objects();
     set_view();
     update_glfw();
