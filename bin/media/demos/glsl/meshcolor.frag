@@ -1,9 +1,10 @@
 #version 410
+// simple phong shading with shadow mapping
 
 in vec3 Normal;
 in vec3 FragPos;
 in vec2 TexCoord;
-in mat3 TBN;
+// in mat3 TBN;
 in vec4 FragPosLightSpace;
 
 out vec4 FragColor;
@@ -36,7 +37,7 @@ vec3 getDiffuseColor(vec3 ldir, vec3 normal, vec3 color) {
   return max(costheta, 0.0) * color;
 };
 
-float compute_shadow(vec4 fposLightSpace, vec3 TbnLightPos, vec3 TbnFragPos) {
+float compute_shadow(vec4 fposLightSpace, vec3 lpos, vec3 fpos) {
   vec3 proj = fposLightSpace.xyz / fposLightSpace.w;
   proj = proj * 0.5 + 0.5;
   // closest depth from light's perspective
@@ -46,7 +47,7 @@ float compute_shadow(vec4 fposLightSpace, vec3 TbnLightPos, vec3 TbnFragPos) {
 
   // calculate bias
   vec3 surfaceNormal = getSurfaceNormal();
-  vec3 lightDirection = getLightDir(TbnLightPos, TbnFragPos);
+  vec3 lightDirection = getLightDir(lpos, fpos);
 
   float bias = max(0.05 * (1.0 - dot(surfaceNormal, lightDirection)), 0.005);
   // PCF
@@ -72,22 +73,20 @@ vec3 getSpecColor(vec3 lightDir, vec3 normal);
 
 void main() {
   // tangent space positions
-  vec3 TbnLightPos = TBN * lightPos;
   // vec3 TbnViewPos = TBN * viewPos;
-  vec3 TbnFragPos = TBN * FragPos;
   vec3 color = diffColor;
   // ambient term I_a × O_d × k_a
   vec3 ambient = color * ambientCoeff;
   // lambertian terms k_d * (N \cdot L) * I_p
   vec3 surfaceNormal = getSurfaceNormal();
-  vec3 lightDirection = getLightDir(TbnLightPos, TbnFragPos);
+  vec3 lightDirection = getLightDir(lightPos, FragPos);
   vec3 diffuseColor = getDiffuseColor(lightDirection, surfaceNormal, color);
   // attenuation term f_att
   // f_att = min(\frac{1}{c_1 + c_2{\times}d_L + c_3{\times}d^2_{L}} , 1)
-  float attenuation = computeAttenuation(attC, TbnLightPos, TbnFragPos);
+  float attenuation = computeAttenuation(attC, lightPos, FragPos);
   vec3 diffuse = attenuation * diffuseColor * lightIntensity;
   // adding specular terms
-  float shadow = compute_shadow(FragPosLightSpace, TbnLightPos, TbnFragPos);
+  float shadow = compute_shadow(FragPosLightSpace, lightPos, FragPos);
   // specmap
   float gamma = 2.2;
   vec3 total = ambient + (1.0 - shadow) * diffuse;

@@ -103,7 +103,7 @@ public:
 
   void set_scene_objects() {
     ammo = mk_cube_ammo();
-    lamp = mk_cube();
+    lamp = SimpleShape(1, false, ShapeChoice::LAMP);
   }
   void draw_objects() override {
     fixed_update();

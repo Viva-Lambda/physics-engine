@@ -13,14 +13,15 @@ namespace vivademos {
 class MeshDemoApp : public DemoApp {
 protected:
   // window size related
-  Mesh cube_mesh;
-  Mesh lamp;
-  Mesh plane_mesh;
+  SimpleShape cube;
+  SimpleShape lamp;
+  SimpleShape plane;
 
   //
   Shader obj_shader;
   Shader depth_shader;
   Shader lamp_shader;
+  Shader plane_shader;
 
   // depth map related
   const unsigned int SHADOW_WIDTH = 1024;
@@ -42,11 +43,16 @@ protected:
   bool is_object_locked = false;
 
   double last_time;
+  // camera related mvp matrices
   glm::vec3 transVec = glm::vec3(1.0);
   glm::mat4 modelMat = glm::mat4(1.0f);
   glm::mat4 lampMat = glm::mat4(1.0f);
+  glm::mat4 lightSpaceMatrix = glm::mat4(1.0f);
+  //
+  glm::mat4 viewMat = glm::mat4(1.0);
+  glm::mat4 projection = glm::mat4(1.0);
   float near_plane_dist = 0.1f;
-  float far_plane_dist = 200.0f;
+  float far_plane_dist = 100.0f;
 
 public:
   MeshDemoApp() {}
@@ -107,7 +113,17 @@ public:
     obj_shader.setVec3Uni("diffColor",
                           glm::vec3(0.8, 0.6, 0.3));
     // texture
-    obj_shader.setIntUni("shadowMap", 1);
+    obj_shader.setIntUni("shadowMap", 0);
+
+    // set plane shader for ground
+    plane_shader = mk_const_color_mesh_shader();
+    plane_shader.useProgram();
+    plane_shader.setFloatUni("ambientCoeff", ambientCoeff);
+    plane_shader.setVec3Uni("attC", attc);
+    plane_shader.setVec3Uni("diffColor",
+                            glm::vec3(0.8, 0.8, 0.6));
+    // texture
+    plane_shader.setIntUni("shadowMap", 0);
 
     // depth shader for shadows
     depth_shader = mk_depth_shader();
@@ -116,9 +132,9 @@ public:
   }
 
   virtual void set_scene_objects() {
-    cube_mesh = mk_cube();
-    lamp = mk_cube();
-    plane_mesh = mk_plane();
+    cube = SimpleShape(1, false, ShapeChoice::CUBE);
+    lamp = SimpleShape(1, false, ShapeChoice::LAMP);
+    plane = SimpleShape(1, false, ShapeChoice::PLANE);
   }
 
   virtual void set_depth_fbo() {
@@ -162,13 +178,11 @@ public:
   }
   void set_view() override {
     // setting model, view, projection
-
-    glm::mat4 projection =
+    projection =
         glm::perspective(glm::radians(camera.zoom),
                          (float)width / (float)height,
                          near_plane_dist, far_plane_dist);
-    glm::mat4 viewMat = camera.getViewMatrix();
-    glm::vec3 viewPos = camera.pos;
+    viewMat = camera.getViewMatrix();
     // render cube object
 
     glm::mat4 lightProj, lightSpaceMat, lightView;
@@ -176,27 +190,7 @@ public:
                             glm::vec3(0.0, 1.0, 0.0));
     lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f,
                            1.0f, 7.5f);
-    lightSpaceMat = lightProj * lightView;
-    depth_shader.useProgram();
-    depth_shader.setMat4Uni("lightSpaceMatrix",
-                            lightSpaceMat);
-    // depth_shader.setMat4Uni("model", modelMat);
-
-    obj_shader.useProgram();
-    obj_shader.setMat4Uni("view", viewMat);
-    obj_shader.setMat4Uni("model", modelMat);
-    obj_shader.setMat4Uni("projection", projection);
-    obj_shader.setMat4Uni("lightSpaceMatrix",
-                          lightSpaceMat);
-    // obj_shader.setVec3Uni("viewPos", viewPos);
-    obj_shader.setVec3Uni("lightPos", light.position);
-    obj_shader.setFloatUni("lightIntensity", 1.0f);
-
-    // render light
-    // lamp_shader.useProgram();
-    // lamp_shader.setMat4Uni("view", viewMat);
-    // lamp_shader.setMat4Uni("model", lampMat);
-    // lamp_shader.setMat4Uni("projection", projection);
+    lightSpaceMatrix = lightProj * lightView;
   }
 
   /** display application content*/
@@ -212,12 +206,34 @@ public:
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // render depth
+
+    depth_shader.useProgram();
+    depth_shader.setMat4Uni("lightSpaceMatrix",
+                            lightSpaceMatrix);
+    glm::mat4 identityModel = glm::mat4(1.0f);
+
+    // lightModel = glm::translate(lightModel,
+    // light.position);
+    depth_shader.setMat4Uni("model", modelMat);
+
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 
     glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
     glClear(GL_DEPTH_BUFFER_BIT);
-    plane_mesh.draw(depth_shader);
-    cube_mesh.draw(depth_shader);
+    depth_shader.setMat4Uni("lightSpaceMatrix",
+                            lightSpaceMatrix);
+
+    // lightModel = glm::translate(lightModel,
+    // light.position);
+    // draw scene from light's perspective
+    depth_shader.setMat4Uni("model", modelMat);
+    cube.draw();
+
+    depth_shader.setMat4Uni("model", identityModel);
+    plane.draw();
+
+    depth_shader.setMat4Uni("model", lampMat);
+    lamp.draw();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // render object
@@ -226,14 +242,57 @@ public:
     glViewport(0, 0, width, height);
     glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // render objects
     obj_shader.useProgram();
-    glActiveTexture(GL_TEXTURE1);
+
+    // bind depth texture
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, depth_texture);
 
-    plane_mesh.draw(obj_shader);
-    cube_mesh.draw(obj_shader);
+    // set mvp
+    obj_shader.setMat4Uni("view", viewMat);
+    obj_shader.setMat4Uni("model", modelMat);
+    obj_shader.setMat4Uni("projection", projection);
+
+    // set light space matrix for shadow rendering
+    obj_shader.setMat4Uni("lightSpaceMatrix",
+                          lightSpaceMatrix);
+
+    // set light position and other info for lightening
+    // computation
+    obj_shader.setVec3Uni("lightPos", light.position);
+    obj_shader.setFloatUni("lightIntensity", 1.0f);
+    obj_shader.setVec3Uni("diffColor",
+                          glm::vec3(0.2, 0.7, 0.2));
+
+    // draw objects that need to be drawn
+    cube.draw();
+
+    // draw the plane
+    obj_shader.setMat4Uni("model", identityModel);
+    obj_shader.setVec3Uni("diffColor",
+                          glm::vec3(0.9, 0.8, 0.6));
+    plane.draw();
+
+    lampMat = glm::translate(lampMat, light.position);
+    
+    //
     glBindTexture(GL_TEXTURE_2D, 0);
-    // lamp.draw(lamp_shader);
+
+    // draw lamp
+    lamp_shader.useProgram();
+    // mvp for lamp
+    lamp_shader.setMat4Uni("view", viewMat);
+    lamp_shader.setMat4Uni("model", lampMat);
+    lamp_shader.setMat4Uni("projection", projection);
+
+    // lamp color
+    lamp_shader.setVec3Uni("lightColor", glm::vec3(1.0f));
+
+    //
+    lamp.draw();
+    //
   }
   void clear_frame() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

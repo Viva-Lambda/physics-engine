@@ -1,6 +1,7 @@
 #pragma once
 // mesh object and other related drawing
 #include <demos/meshutils.hpp>
+#include <demos/rendershape.hpp>
 #include <demos/shader.hpp>
 #include <demos/texture.hpp>
 #include <demos/vertex.hpp>
@@ -129,15 +130,15 @@ private:
         (void *)offsetof(Vertex, texCoord));
 
     // tangent
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(
-        3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-        (void *)offsetof(Vertex, tangent));
-    // bitangent
-    glEnableVertexAttribArray(4);
-    glVertexAttribPointer(
-        4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-        (void *)offsetof(Vertex, bitangent));
+    // glEnableVertexAttribArray(3);
+    // glVertexAttribPointer(
+    //     3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+    //     (void *)offsetof(Vertex, tangent));
+    // // bitangent
+    // glEnableVertexAttribArray(4);
+    // glVertexAttribPointer(
+    //     4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+    //     (void *)offsetof(Vertex, bitangent));
 
     //
     glBindVertexArray(0);
@@ -233,6 +234,53 @@ public:
     for (unsigned int i = 0; i < nb_triangles; i++) {
       //
       ts[i].destroy();
+    }
+  }
+};
+
+enum class ShapeChoice {
+  CUBE = 0,
+  CUBE_D = 1,
+  QUAD = 2,
+  LAMP = 3,
+  PLANE = 4,
+};
+
+class SimpleShape {
+public:
+  unsigned int nb_shape;
+  bool in_tangent;
+  ShapeChoice stype;
+
+  SimpleShape()
+      : nb_shape(0), in_tangent(false),
+        stype(ShapeChoice::CUBE) {}
+  SimpleShape(unsigned int t, bool tan = false,
+              ShapeChoice s = ShapeChoice::CUBE)
+      : nb_shape(t), in_tangent(tan), stype(s) {}
+  void draw() {
+    std::function<void(void)> drawfn;
+    switch (stype) {
+    case ShapeChoice::CUBE:
+      drawfn = in_tangent ? renderCubeInTangentSpaceS
+                          : renderCubeS;
+      break;
+    case ShapeChoice::CUBE_D:
+      drawfn = renderCubeD_S;
+      break;
+
+    case ShapeChoice::LAMP:
+      drawfn = renderLamp;
+      break;
+    case ShapeChoice::QUAD:
+      drawfn = renderQuadS;
+      break;
+    case ShapeChoice::PLANE:
+      drawfn = renderPlaneS;
+      break;
+    }
+    for (unsigned int i = 0; i < nb_shape; i++) {
+      drawfn();
     }
   }
 };
