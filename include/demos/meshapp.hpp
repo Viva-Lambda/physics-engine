@@ -137,7 +137,7 @@ public:
     plane = SimpleShape(1, false, ShapeChoice::PLANE);
   }
 
-  virtual void set_depth_fbo() {
+  void set_depth_fbo() {
     glGenFramebuffers(1, &depth_map_fbo);
     glGenTextures(1, &depth_texture);
 
@@ -165,7 +165,7 @@ public:
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
   }
-  virtual void set_related() {
+  void set_related() {
     set_scene_objects();
     set_depth_fbo();
   }
@@ -183,7 +183,6 @@ public:
                          (float)width / (float)height,
                          near_plane_dist, far_plane_dist);
     viewMat = camera.getViewMatrix();
-    // render cube object
 
     glm::mat4 lightProj, lightSpaceMat, lightView;
     lightView = glm::lookAt(light.position, glm::vec3(0.0),
@@ -234,7 +233,7 @@ public:
     // light.position);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
   }
-  virtual void set_object_vp() {
+  void set_object_vp() {
     obj_shader.useProgram();
     obj_shader.setMat4Uni("view", viewMat);
     obj_shader.setMat4Uni("projection", projection);
@@ -249,14 +248,7 @@ public:
     obj_shader.setFloatUni("lightIntensity", 1.0f);
   }
 
-  virtual void render_scene_objects() {
-    // draw objects that need to be drawn
-    obj_shader.setVec3Uni("diffColor",
-                          glm::vec3(0.2, 0.7, 0.2));
-
-    obj_shader.setMat4Uni("model", modelMat);
-    cube.draw();
-
+  void render_plane() {
     // draw the plane
     glm::mat4 identityModel = glm::mat4(1.0f);
 
@@ -264,11 +256,17 @@ public:
     obj_shader.setVec3Uni("diffColor",
                           glm::vec3(0.9, 0.8, 0.6));
     plane.draw();
-
-    //
-    glBindTexture(GL_TEXTURE_2D, 0);
   }
-  virtual void render_lamp() {
+
+  virtual void render_scene_objects() {
+    // draw objects that need to be drawn
+    obj_shader.setVec3Uni("diffColor",
+                          glm::vec3(0.2, 0.7, 0.2));
+
+    obj_shader.setMat4Uni("model", modelMat);
+    cube.draw();
+  }
+  void render_lamp() {
     lamp_shader.useProgram();
 
     lampMat = glm::mat4(1.0f);
@@ -288,36 +286,44 @@ public:
     //
     lamp.draw();
   }
-  virtual void draw_objects() {
+  void draw_objects() {
+
+    /** draw scene from light's perspective */
     draw_to_depth_fbo();
 
-    // render object
-
-    // reset viewport
+    /** reset viewport after depth rendering */
     reset_frame();
 
-    // render objects
+    /** render scene objects to scene */
     obj_shader.useProgram();
 
-    // bind depth texture
+    /** bind depth texture */
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, depth_texture);
 
-    // set mvp
+    /** set object view and projection matrix */
     set_object_vp();
 
+    /** draw scene objects */
     render_scene_objects();
 
-    render_lamp();
+    /** draw plane on which we can see the shadows */
+    render_plane();
 
-    //
+    // done with depth texture
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    /** draw lamp object */
+    render_lamp();
   }
   void clear_frame() {
     glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
-  void reset_frame() { glViewport(0, 0, width, height); clear_frame();}
+  void reset_frame() {
+    glViewport(0, 0, width, height);
+    clear_frame();
+  }
   void update() override {
     reset_frame();
     draw_objects();
@@ -369,12 +375,14 @@ public:
       print_keys();
     }
   }
+  /** \brief obtain delta time */
   double dtime() {
     auto current = glfwGetTime();
     auto d = current - last_time;
     last_time = current;
     return d;
   }
+  /** \brief move camera object */
   virtual void moveCamera() {
     //
     auto deltaTime = dtime();
@@ -411,6 +419,7 @@ public:
           Camera_Movement::BACKWARD, 0.7f);
     }
   }
+  /** move light object */
   virtual void moveLight() {
     // move light
     auto deltaTime = 0.01f;
@@ -447,6 +456,7 @@ public:
     modelMat = glm::translate(mmat, trans);
   }
 
+  /** move scene object */
   virtual void moveObject() {
     //
     auto deltaTime = dtime();
@@ -492,6 +502,7 @@ public:
       set_model_mat(modelMat, transVec);
     }
   }
+  /** toggle object/camera/light movement*/
   void process_toggles() {
     if (glfwGetKey(window, GLFW_KEY_KP_7) == GLFW_PRESS) {
       toggle_camera_movement();
@@ -554,7 +565,9 @@ public:
     print_move_rotate_camera_keys();
     print_move_light_keys();
     print_move_obj_keys();
+    print_other_keys();
   }
+  virtual void print_other_keys() {}
 
   void render_text(int x, int y, std::string txt,
                    void *font = nullptr) override {}

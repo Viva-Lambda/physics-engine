@@ -20,34 +20,34 @@ private:
   ShotType current_stype;
 
   void fire() {
-    if (ammo.stype == UNUSED) {
+    if (ammo.stype == ShotType::UNUSED) {
       return;
     }
 
     // choose shot type
     switch (current_stype) {
-    case UNUSED:
+    case ShotType::UNUSED:
       return;
       break;
-    case PISTOL:
+    case ShotType::PISTOL:
       ammo.particle.set_mass(2.0f);
       ammo.particle.set_velocity(0, 0, 35);
       ammo.particle.set_acceleration(0, -1.0f, 0);
       ammo.particle.set_damping(0.99f);
       break;
-    case ARTILLERY:
+    case ShotType::ARTILLERY:
       ammo.particle.set_mass(200.0f);
       ammo.particle.set_velocity(0, 30, 40);
       ammo.particle.set_acceleration(0, -20.0f, 0);
       ammo.particle.set_damping(0.99f);
       break;
-    case FIREBALL:
+    case ShotType::FIREBALL:
       ammo.particle.set_mass(1.0f);
       ammo.particle.set_velocity(0, 0, 10);
       ammo.particle.set_acceleration(0, 0.6f, 0);
       ammo.particle.set_damping(0.9f);
       break;
-    case LASER:
+    case ShotType::LASER:
       ammo.particle.set_mass(0.1f);
       ammo.particle.set_velocity(0, 0, 100.f);
       ammo.particle.set_acceleration(0, 0.0f,
@@ -66,9 +66,9 @@ private:
 
 public:
   BallisticMeshDemo()
-      : MeshDemoApp(), current_stype(LASER) {}
+      : MeshDemoApp(), current_stype(ShotType::LASER) {}
   BallisticMeshDemo(int w, int h, std::string title)
-      : MeshDemoApp(w, h, title), current_stype(LASER) {}
+      : MeshDemoApp(w, h, title), current_stype(ShotType::LASER) {}
   std::string get_title() override {
     return "Ballistic Demo Application";
   }
@@ -80,7 +80,7 @@ public:
 
     // update physics tick for each particle
     auto shot = ammo;
-    if (shot.stype != UNUSED) {
+    if (shot.stype != ShotType::UNUSED) {
       // run the physics
       shot.particle.integrate(duration);
 
@@ -96,7 +96,7 @@ public:
       bool cond3 = shot.particle.get_position().z >
                    MeshDemoApp::far_plane_dist;
       if (cond1 || cond2 || cond3) {
-        shot.stype = UNUSED;
+        shot.stype = ShotType::UNUSED;
       }
     }
   }
@@ -123,10 +123,21 @@ public:
     depth_shader.setMat4Uni("model", lampMat);
     lamp.draw();
   }
-  void draw_objects() override {
-    fixed_update();
-    draw_to_depth_fbo();
+  void render_scene_objects() override {
+    // draw objects that need to be drawn
+    obj_shader.setVec3Uni("diffColor",
+                          glm::vec3(0.2, 0.7, 0.2));
+
+    obj_shader.setMat4Uni("model", modelMat);
+    ammo.draw();
+  }
+
+  void update() override {
     reset_frame();
+    fixed_update();
+    set_view();
+    draw_objects();
+    update_glfw();
   }
 
   void process_other_keys() override {
@@ -135,13 +146,24 @@ public:
       cstype += 1;
     }
     if (cstype > 4) {
-      current_stype = UNUSED;
+      current_stype = ShotType::UNUSED;
     } else {
       current_stype = static_cast<ShotType>(cstype);
     }
     if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
       fire();
     }
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+      std::cout << current_stype << std::endl;
+    }
+  }
+  void print_other_keys() override {
+    std::cout << "Ballistic Control Keys" << std::endl;
+    std::cout << "-------------------------" << std::endl;
+    std::cout << "C: switch ammo type" << std::endl;
+    std::cout << "F: fire" << std::endl;
+    std::cout << "L: show curent ammo type" << std::endl;
+    std::cout << "-------------------------" << std::endl;
   }
 };
 };

@@ -245,6 +245,25 @@ enum class ShapeChoice {
   LAMP = 3,
   PLANE = 4,
 };
+std::ostream &operator<<(std::ostream &out, ShapeChoice s) {
+  switch (s) {
+  case ShapeChoice::CUBE:
+    return out << "ShapeChoice::CUBE";
+    break;
+  case ShapeChoice::CUBE_D:
+    return out << "ShapeChoice::CUBE_D";
+    break;
+  case ShapeChoice::LAMP:
+    return out << "ShapeChoice::LAMP";
+    break;
+  case ShapeChoice::PLANE:
+    return out << "ShapeChoice::PLANE";
+    break;
+  case ShapeChoice::QUAD:
+    return out << "ShapeChoice::QUAD";
+    break;
+  }
+}
 
 class SimpleShape {
 public:
@@ -285,13 +304,33 @@ public:
   }
 };
 
-enum ShotType {
+enum class ShotType {
   UNUSED = 0,
   PISTOL = 1,
   ARTILLERY = 2,
   FIREBALL = 3,
   LASER = 4
 };
+
+std::ostream &operator<<(std::ostream &out, ShotType s) {
+  switch (s) {
+  case ShotType::UNUSED:
+    return out << "ShotType::UNUSED";
+    break;
+  case ShotType::PISTOL:
+    return out << "ShotType::PISTOL";
+    break;
+  case ShotType::ARTILLERY:
+    return out << "ShotType::ARTILLERY";
+    break;
+  case ShotType::FIREBALL:
+    return out << "ShotType::FIREBALL";
+    break;
+  case ShotType::LASER:
+    return out << "ShotType::LASER";
+    break;
+  }
+}
 
 class AmmoRound {
 public:

@@ -69,7 +69,7 @@ public:
   /**\name mass related*/
   /**@{*/
   void set_mass(const real mass) {
-    D_CHECK_MSG(mass == 0, "mass can not be 0");
+    D_CHECK_MSG(mass != 0, "mass can not be 0");
     inverse_mass = static_cast<real>(1.0 / mass);
   }
   void set_inverse_mass(real imass) {
