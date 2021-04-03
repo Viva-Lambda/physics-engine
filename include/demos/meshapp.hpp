@@ -202,7 +202,7 @@ public:
     destroy_graphics();
     return 0;
   }
-  virtual void draw_objects() {
+  virtual void draw_to_depth_fbo() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // render depth
@@ -235,6 +235,9 @@ public:
     depth_shader.setMat4Uni("model", lampMat);
     lamp.draw();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  }
+  virtual void draw_objects() {
+    draw_to_depth_fbo();
 
     // render object
 
@@ -276,7 +279,7 @@ public:
     plane.draw();
 
     lampMat = glm::translate(lampMat, light.position);
-    
+
     //
     glBindTexture(GL_TEXTURE_2D, 0);
 

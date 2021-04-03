@@ -104,11 +104,15 @@ public:
   void set_scene_objects() {
     ammo = mk_cube_ammo();
     lamp = SimpleShape(1, false, ShapeChoice::LAMP);
+    plane = SimpleShape(1, false, ShapeChoice::PLANE);
+  }
+  void draw_to_depth_fbo() override {
+
   }
   void draw_objects() override {
     fixed_update();
-    ammo.set_model_mat(modelMat);
-    ammo.draw(obj_shader);
+    auto mat = ammo.get_model_mat();
+    ammo.draw();
   }
 
   void process_other_keys() override {

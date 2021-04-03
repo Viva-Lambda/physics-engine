@@ -293,22 +293,27 @@ enum ShotType {
   LASER = 4
 };
 
-class AmmoRound : public Mesh {
+class AmmoRound {
 public:
   vivaphysics::Particle particle;
   ShotType stype;
   unsigned int start_time;
-  AmmoRound() : Mesh() {}
-  AmmoRound(TriangleSurface *triangles, unsigned int nbt,
-            ShotType st)
-      : Mesh(triangles, nbt), stype(st) {}
-  AmmoRound(const Mesh &m) : Mesh(m), stype(UNUSED) {}
-  glm::mat4 set_model_mat(glm::mat4 mmat) const {
+  glm::vec3 scale = glm::vec3(1.0f);
+  SimpleShape shape =
+      SimpleShape(1, false, ShapeChoice::CUBE);
+  AmmoRound() {}
+  AmmoRound(ShotType st,
+            const glm::vec3 &s = glm::vec3(1.0f))
+      : stype(st), scale(s) {}
+  glm::mat4 get_model_mat() const {
+    glm::mat4 mmat(1.0f);
     vivaphysics::point3 pos;
     particle.get_position(pos);
     auto posv = pos.to_glm();
+    mmat = glm::scale(mmat, scale);
     return glm::translate(mmat, posv);
   }
+  void draw() { shape.draw(); }
 };
 
 /**Make a triangle surface*/
@@ -472,8 +477,5 @@ Mesh mk_plane() {
 }
 
 /** make cube ammo*/
-AmmoRound mk_cube_ammo() {
-  auto mesh = mk_cube();
-  return AmmoRound(mesh);
-}
+AmmoRound mk_cube_ammo() { return AmmoRound(); }
 };
