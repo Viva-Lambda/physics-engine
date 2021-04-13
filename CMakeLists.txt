@@ -75,9 +75,8 @@ add_executable(
     )
 #target_link_libraries(final.out AssimpLib)
 
+
 target_link_libraries(BallisticDemo.out glfwLib)
-
-
 
 install(TARGETS main.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS demoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")

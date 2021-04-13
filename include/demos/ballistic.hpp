@@ -5,6 +5,7 @@
 #include <external.hpp>
 #include <vivaphysics/core.h>
 #include <vivaphysics/particle.hpp>
+#include <vivaphysics/pfgen.hpp>
 
 using namespace vivademos;
 
@@ -20,13 +21,14 @@ private:
   ShotType current_stype;
 
   void fire() {
-    if (ammo.stype == ShotType::UNUSED) {
+    if (current_stype == ShotType::UNUSED) {
       return;
     }
 
     // choose shot type
     switch (current_stype) {
     case ShotType::UNUSED:
+      ammo.stype = current_stype;
       return;
       break;
     case ShotType::PISTOL:
@@ -68,40 +70,38 @@ public:
   BallisticMeshDemo()
       : MeshDemoApp(), current_stype(ShotType::LASER) {}
   BallisticMeshDemo(int w, int h, std::string title)
-      : MeshDemoApp(w, h, title), current_stype(ShotType::LASER) {}
+      : MeshDemoApp(w, h, title),
+        current_stype(ShotType::LASER) {}
   std::string get_title() override {
     return "Ballistic Demo Application";
   }
   void fixed_update() {
-    float duration =
-        static_cast<float>(MeshDemoApp::dtime());
+    float duration = static_cast<float>(dtime());
     if (duration <= 0.0f)
       return;
 
     // update physics tick for each particle
-    auto shot = ammo;
-    if (shot.stype != ShotType::UNUSED) {
+    if (ammo.stype != ShotType::UNUSED) {
       // run the physics
-      shot.particle.integrate(duration);
+      ammo.particle.integrate(duration);
 
       // check if the shot is still visible
       // not on screen
-      bool cond1 = shot.particle.get_position().y < 0.0f;
+      bool cond1 = ammo.particle.get_position().y < 0.0f;
 
       // takes too long
-      bool cond2 =
-          shot.start_time + 5000 < MeshDemoApp::last_time;
+      bool cond2 = ammo.start_time + 5000 < last_time;
 
       // beyond visible range
-      bool cond3 = shot.particle.get_position().z >
-                   MeshDemoApp::far_plane_dist;
+      bool cond3 =
+          ammo.particle.get_position().z > far_plane_dist;
       if (cond1 || cond2 || cond3) {
-        shot.stype = ShotType::UNUSED;
+        ammo.stype = ShotType::UNUSED;
       }
     }
   }
 
-  void set_scene_objects() {
+  void set_scene_objects() override {
     ammo = mk_cube_ammo();
     lamp = SimpleShape(1, false, ShapeChoice::LAMP);
     plane = SimpleShape(1, false, ShapeChoice::PLANE);
@@ -120,14 +120,15 @@ public:
     depth_shader.setMat4Uni("model", identityModel);
     plane.draw();
 
-    depth_shader.setMat4Uni("model", lampMat);
-    lamp.draw();
+    // depth_shader.setMat4Uni("model", lampMat);
+    // lamp.draw();
   }
   void render_scene_objects() override {
     // draw objects that need to be drawn
     obj_shader.setVec3Uni("diffColor",
                           glm::vec3(0.2, 0.7, 0.2));
 
+    modelMat = ammo.get_model_mat();
     obj_shader.setMat4Uni("model", modelMat);
     ammo.draw();
   }
@@ -142,7 +143,7 @@ public:
 
   void process_other_keys() override {
     auto cstype = static_cast<int>(current_stype);
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
       cstype += 1;
     }
     if (cstype > 4) {
@@ -150,19 +151,19 @@ public:
     } else {
       current_stype = static_cast<ShotType>(cstype);
     }
-    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
       fire();
     }
-    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
       std::cout << current_stype << std::endl;
     }
   }
   void print_other_keys() override {
     std::cout << "Ballistic Control Keys" << std::endl;
     std::cout << "-------------------------" << std::endl;
-    std::cout << "C: switch ammo type" << std::endl;
-    std::cout << "F: fire" << std::endl;
-    std::cout << "L: show curent ammo type" << std::endl;
+    std::cout << "T: switch ammo type" << std::endl;
+    std::cout << "Y: fire" << std::endl;
+    std::cout << "G: show curent ammo type" << std::endl;
     std::cout << "-------------------------" << std::endl;
   }
 };

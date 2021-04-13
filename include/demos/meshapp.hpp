@@ -215,8 +215,8 @@ public:
     depth_shader.setMat4Uni("model", identityModel);
     plane.draw();
 
-    depth_shader.setMat4Uni("model", lampMat);
-    lamp.draw();
+    // depth_shader.setMat4Uni("model", lampMat);
+    // lamp.draw();
   }
   virtual void draw_to_depth_fbo() {
     // render to depth fbo
@@ -385,36 +385,57 @@ public:
   /** \brief move camera object */
   virtual void moveCamera() {
     //
-    auto deltaTime = dtime();
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+    float deltaTime = 0.01;
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
       camera.processKeyboard(Camera_Movement::FORWARD,
                              deltaTime);
     }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
       camera.processKeyboard(Camera_Movement::LEFT,
                              deltaTime);
     }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
       camera.processKeyboard(Camera_Movement::BACKWARD,
                              deltaTime);
     }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
       camera.processKeyboard(Camera_Movement::RIGHT,
                              deltaTime);
     }
-    if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+    auto control_left =
+        (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ==
+         GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS);
+    if (control_left) {
       camera.processKeyboardRotate(Camera_Movement::LEFT,
                                    0.7f);
     }
-    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+    auto control_right =
+        (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ==
+         GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS);
+
+    if (control_right) {
       camera.processKeyboardRotate(Camera_Movement::RIGHT,
                                    0.7f);
     }
-    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+
+    auto control_up =
+        (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ==
+         GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS);
+
+    if (control_up) {
       camera.processKeyboardRotate(Camera_Movement::FORWARD,
                                    0.7f);
     }
-    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+
+    auto control_down =
+        (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ==
+         GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS);
+
+    if (control_down) {
       camera.processKeyboardRotate(
           Camera_Movement::BACKWARD, 0.7f);
     }
@@ -460,41 +481,41 @@ public:
   virtual void moveObject() {
     //
     auto deltaTime = dtime();
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
       transVec.x = deltaTime;
       transVec.y = 0.0f;
       transVec.z = 0.0f;
       set_model_mat(modelMat, transVec);
     }
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
       transVec.x = -deltaTime;
       transVec.y = 0.0f;
       transVec.z = 0.0f;
 
       set_model_mat(modelMat, transVec);
     }
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
       transVec.y = deltaTime;
       transVec.x = 0.0f;
       transVec.z = 0.0f;
 
       set_model_mat(modelMat, transVec);
     }
-    if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
       transVec.y = -deltaTime;
       transVec.x = 0.0f;
       transVec.z = 0.0f;
 
       set_model_mat(modelMat, transVec);
     }
-    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
       transVec.z = deltaTime;
       transVec.y = 0.0f;
       transVec.x = 0.0f;
 
       set_model_mat(modelMat, transVec);
     }
-    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
       transVec.z = -deltaTime;
       transVec.y = 0.0f;
       transVec.x = 0.0f;
@@ -525,14 +546,14 @@ public:
   virtual void print_move_rotate_camera_keys() const {
     std::cout << "Move Rotate Camera Keys:" << std::endl;
     std::cout << "-------------------------" << std::endl;
-    std::cout << "W/Z move forward" << std::endl;
-    std::cout << "A/Q move left" << std::endl;
-    std::cout << "S move backward" << std::endl;
-    std::cout << "D move right" << std::endl;
-    std::cout << "H rotate left" << std::endl;
-    std::cout << "J rotate right" << std::endl;
-    std::cout << "K rotate downward" << std::endl;
-    std::cout << "L rotate upward" << std::endl;
+    std::cout << "UP_ARROW move forward" << std::endl;
+    std::cout << "LEFT_ARROW move left" << std::endl;
+    std::cout << "DOWN_ARROW move backward" << std::endl;
+    std::cout << "RIGHT_ARROW move right" << std::endl;
+    std::cout << "CTRL+LEFT rotate left" << std::endl;
+    std::cout << "CTRL+RIGHT rotate right" << std::endl;
+    std::cout << "CTRL+DOWN rotate downward" << std::endl;
+    std::cout << "CTRL+UP rotate upward" << std::endl;
     std::cout << "-------------------------" << std::endl;
   }
   virtual void print_move_light_keys() const {
@@ -549,12 +570,12 @@ public:
   virtual void print_move_obj_keys() {
     std::cout << "Move Object Keys:" << std::endl;
     std::cout << "-------------------------" << std::endl;
-    std::cout << "E move left" << std::endl;
-    std::cout << "R move right" << std::endl;
-    std::cout << "T move up" << std::endl;
-    std::cout << "Y move down" << std::endl;
-    std::cout << "I move forward" << std::endl;
-    std::cout << "O move backward" << std::endl;
+    std::cout << "W move left" << std::endl;
+    std::cout << "X move right" << std::endl;
+    std::cout << "C move up" << std::endl;
+    std::cout << "V move down" << std::endl;
+    std::cout << "B move forward" << std::endl;
+    std::cout << "N move backward" << std::endl;
     std::cout << "-------------------------" << std::endl;
   }
   void print_keys() {

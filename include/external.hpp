@@ -1,9 +1,11 @@
 #pragma once
 
+#include <array>
 #include <exception>
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <math.h>
 #include <sstream>
@@ -11,7 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <array>
 
 // thirdparty modules
 // gl pointer

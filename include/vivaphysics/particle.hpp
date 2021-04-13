@@ -72,6 +72,11 @@ public:
     D_CHECK_MSG(mass != 0, "mass can not be 0");
     inverse_mass = static_cast<real>(1.0 / mass);
   }
+  real get_mass() const {
+    if (inverse_mass < 0)
+      return REAL_MAX;
+    return static_cast<real>(1.0 / inverse_mass);
+  }
   void set_inverse_mass(real imass) {
     inverse_mass = imass;
   }
