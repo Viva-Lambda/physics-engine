@@ -60,6 +60,25 @@ public:
     accumulated_force.clear();
   }
 
+  bool operator==(const Particle &p) const {
+    if (p.position != position)
+      return false;
+    if (p.velocity != velocity)
+      return false;
+    if (p.acceleration != acceleration)
+      return false;
+    if (p.accumulated_force != accumulated_force)
+      return false;
+    if (p.inverse_mass != inverse_mass)
+      return false;
+    if (p.damping != damping)
+      return false;
+    return true;
+  }
+  bool operator!=(const Particle &p) const {
+    return !(*this == p);
+  }
+
   /** \name Accessor Functions for the Particle
 
     These functions help us to set/get the particle state.
@@ -73,8 +92,10 @@ public:
     inverse_mass = static_cast<real>(1.0 / mass);
   }
   real get_mass() const {
-    if (inverse_mass < 0)
-      return REAL_MAX;
+    if (inverse_mass < 0) {
+      auto rmax = REAL_MAX;
+      return rmax;
+    }
     return static_cast<real>(1.0 / inverse_mass);
   }
   void set_inverse_mass(real imass) {
@@ -109,6 +130,7 @@ public:
     velocity = v3(x, y, z);
   }
   v3 get_velocity() const { return velocity; }
+  void get_velocity(v3 &v) const { v = velocity; }
   /**@}*/
 
   /**\name acceleration related*/
