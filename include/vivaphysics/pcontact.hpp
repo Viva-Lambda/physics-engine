@@ -223,4 +223,25 @@ public:
     }
   }
 };
+
+template <class T> struct ParticleContactGenerator {
+
+  /**
+    \brief Fill the given contact structure with the
+    generated contact
+
+    \param contact the contact array holding particle
+    contacts to be written
+
+    \param limit maximum number of contacts in the vector
+    that can be written to.
+
+    \param obj generator object
+   */
+  static unsigned int
+  add_contact(T &obj, std::vector<ParticleContact> &contact,
+              unsigned int contact_limit) {
+    return 0;
+  }
+};
 };

@@ -5,8 +5,9 @@
 #include <external.hpp>
 #include <vivaphysics/core.h>
 #include <vivaphysics/particle.hpp>
-#include <vivaphysics/pfgen.hpp>
 #include <vivaphysics/pcontact.hpp>
+#include <vivaphysics/pfgen.hpp>
+#include <vivaphysics/plink.hpp>
 
 using namespace vivademos;
 
