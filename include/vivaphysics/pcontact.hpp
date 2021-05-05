@@ -165,9 +165,8 @@ public:
 
   void
   resolve_contacts(std::vector<ParticleContact> &contacts,
+                   unsigned int nb_contacts,
                    real duration) {
-    unsigned int nb_contacts =
-        static_cast<unsigned int>(contacts.size());
     unsigned int i;
     iteration_used = 0;
     while (iteration_used < nb_iterations) {

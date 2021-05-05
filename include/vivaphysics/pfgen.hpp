@@ -1,6 +1,7 @@
 // particle force generator
 #pragma once
 #include <external.hpp>
+#include <memory>
 #include <vivaphysics/core.h>
 #include <vivaphysics/particle.hpp>
 #include <vivaphysics/pfgenenum.hpp>
@@ -11,7 +12,8 @@ namespace vivaphysics {
 template <class T> struct ParticleForceGenerator {
   /**Compute the force that is going to be applied to given
    * particle*/
-  void update_force(const T &generator, Particle *p,
+  void update_force(const T &generator,
+                    std::shared_ptr<Particle> p,
                     real duration) {}
 };
 
@@ -235,7 +237,8 @@ struct ParticleForceGeneratorWrapper {
 template <> struct ParticleForceGenerator<ParticleGravity> {
 
   void update_force(const ParticleGravity &generator,
-                    Particle *p, real duration) {
+                    std::shared_ptr<Particle> p,
+                    real duration) {
     // check if object is immovable
     if (!p->has_finite_mass())
       return;
@@ -247,7 +250,8 @@ template <> struct ParticleForceGenerator<ParticleGravity> {
 
 template <> struct ParticleForceGenerator<ParticleDrag> {
   void update_force(const ParticleDrag &generator,
-                    Particle *p, real duration) {
+                    std::shared_ptr<Particle> p,
+                    real duration) {
     // check if object is immovable
     v3 force;
     p->get_velocity(force);
@@ -269,7 +273,8 @@ template <> struct ParticleForceGenerator<ParticleDrag> {
 template <>
 struct ParticleForceGenerator<ParticleAnchoredSpring> {
   void update_force(const ParticleAnchoredSpring &generator,
-                    Particle *p, real duration) {
+                    std::shared_ptr<Particle> p,
+                    real duration) {
     // check if object is immovable
     v3 force;
     p->get_position(force);
@@ -292,7 +297,8 @@ struct ParticleForceGenerator<ParticleAnchoredSpring> {
 template <>
 struct ParticleForceGenerator<ParticleAnchoredBungee> {
   void update_force(const ParticleAnchoredBungee &generator,
-                    Particle *p, real duration) {
+                    std::shared_ptr<Particle> p,
+                    real duration) {
     // check if object is immovable
     v3 force;
     p->get_position(force);
@@ -316,7 +322,8 @@ struct ParticleForceGenerator<ParticleAnchoredBungee> {
 template <>
 struct ParticleForceGenerator<ParticleFakeSpring> {
   void update_force(const ParticleFakeSpring &generator,
-                    Particle *p, real duration) {
+                    std::shared_ptr<Particle> p,
+                    real duration) {
     // check if object is immovable
     if (!p->has_finite_mass())
       return;
@@ -354,7 +361,8 @@ struct ParticleForceGenerator<ParticleFakeSpring> {
 };
 template <> struct ParticleForceGenerator<ParticleSpring> {
   void update_force(const ParticleSpring &generator,
-                    Particle *p, real duration) {
+                    std::shared_ptr<Particle> p,
+                    real duration) {
     v3 force;
     p->get_position(force);
     force -= generator.end_p.get_position();
@@ -374,7 +382,8 @@ template <> struct ParticleForceGenerator<ParticleSpring> {
 
 template <> struct ParticleForceGenerator<ParticleBungee> {
   void update_force(const ParticleBungee &generator,
-                    Particle *p, real duration) {
+                    std::shared_ptr<Particle> p,
+                    real duration) {
     v3 force;
     p->get_position(force);
     force -= generator.end_p.get_position();
@@ -396,7 +405,8 @@ template <> struct ParticleForceGenerator<ParticleBungee> {
 template <>
 struct ParticleForceGenerator<ParticleBuoyancy> {
   void update_force(const ParticleBuoyancy &generator,
-                    Particle *p, real duration) {
+                    std::shared_ptr<Particle> p,
+                    real duration) {
     real depth = p->get_position().y;
 
     // are we in admissible depth
@@ -424,7 +434,7 @@ struct ParticleForceGenerator<
     ParticleForceGeneratorWrapper> {
   void update_force(
       const ParticleForceGeneratorWrapper &generator,
-      Particle *p, real duration) {
+      std::shared_ptr<Particle> p, real duration) {
     switch (generator.gtype) {
     case ParticleForceGeneratorType::GRAVITY:
       ParticleForceGenerator<ParticleGravity> gen;
@@ -469,20 +479,21 @@ struct ParticleForceGenerator<
 class ParticleForceRegistry {
 protected:
   typedef std::vector<
-      std::pair<Particle *, ParticleForceGeneratorWrapper>>
+      std::pair<std::shared_ptr<Particle>,
+                ParticleForceGeneratorWrapper>>
       Registry;
   Registry force_register;
 
 public:
   /** registers the given particle with given generator */
-  void add(Particle *p,
+  void add(std::shared_ptr<Particle> p,
            ParticleForceGeneratorWrapper gwrapper) {
     auto particle_gen_pair = std::make_pair(p, gwrapper);
     force_register.push_back(particle_gen_pair);
   }
 
   /** removes the given particle with given generator */
-  void remove(Particle *p,
+  void remove(std::shared_ptr<Particle> p,
               ParticleForceGeneratorWrapper gen) {
     for (unsigned int i = 0; i < force_register.size();
          i++) {

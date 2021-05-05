@@ -10,6 +10,17 @@ using namespace vivaphysics;
 namespace vivaphysics {
 
 class v3 : public glm::vec3 {
+  // static methods
+public:
+  const static v3 GRAVITY;
+  const static v3 HIGH_GRAVITY;
+  const static v3 UP;
+  const static v3 RIGHT;
+  const static v3 OUT_OF_SCREEN;
+  const static v3 X;
+  const static v3 Y;
+  const static v3 Z;
+
 public:
   v3() : glm::vec3() {}
   v3(real v) : glm::vec3(v) {}
@@ -118,6 +129,15 @@ public:
   void trim(real size) { *this = trimmed(size); }
   void clear() { *this = v3(0.0f); }
 };
+
+const v3 v3::GRAVITY = v3(0, -9.81, 0);
+const v3 v3::HIGH_GRAVITY = v3(0, -20.62, 0);
+const v3 v3::UP = v3(0, 1, 0);
+const v3 v3::RIGHT = v3(1, 0, 0);
+const v3 v3::OUT_OF_SCREEN = v3(0, 0, 1);
+const v3 v3::X = v3(0, 1, 0);
+const v3 v3::Y = v3(1, 0, 0);
+const v3 v3::Z = v3(0, 0, 1);
 
 typedef v3 point3;
 typedef v3 color;

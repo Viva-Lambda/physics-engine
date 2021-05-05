@@ -15,6 +15,7 @@
 #include <time.h>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 // thirdparty modules
 // gl pointer

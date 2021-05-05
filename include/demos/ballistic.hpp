@@ -8,6 +8,7 @@
 #include <vivaphysics/pcontact.hpp>
 #include <vivaphysics/pfgen.hpp>
 #include <vivaphysics/plink.hpp>
+#include <vivaphysics/pworld.hpp>
 
 using namespace vivademos;
 
