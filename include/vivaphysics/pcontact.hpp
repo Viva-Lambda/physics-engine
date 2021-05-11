@@ -8,8 +8,18 @@ using namespace vivaphysics;
 namespace vivaphysics {
 
 struct ContactParticles {
-  Particle p1, p2;
+  Particles ps;
   bool is_double = false;
+  ContactParticles() {}
+  ContactParticles(const Particle &p) {
+    Particles p_s;
+    auto sptr = std::make_shared<Particle>(p);
+    p_s.push_back(sptr);
+    ps = p_s;
+  }
+  ContactParticles(const Particles &p_s) : ps(p_s) {}
+  ContactParticles(const Particles &p_s, bool is_d)
+      : ps(p_s), is_double(is_d) {}
 };
 
 class ParticleContact {
@@ -39,9 +49,10 @@ public:
   }
 
   real compute_separating_velocity() const {
-    v3 relative_velocity = particles.p1.get_velocity();
+    std::shared_ptr<Particle> p1 = particles.ps[0];
+    v3 relative_velocity = p1->get_velocity();
     if (particles.is_double) {
-      relative_velocity -= particles.p2.get_velocity();
+      relative_velocity -= particles.ps[1]->get_velocity();
     }
     return relative_velocity.dot(contact_normal);
   }
@@ -59,10 +70,10 @@ public:
     real sep_v = -sep_velocity * restitution;
 
     v3 acceleration_caused_velocity =
-        particles.p1.get_acceleration();
+        particles.ps[0]->get_acceleration();
     if (particles.is_double) {
       acceleration_caused_velocity -=
-          particles.p2.get_acceleration();
+          particles.ps[1]->get_acceleration();
     }
     real velocity_caused_by_acceleration =
         acceleration_caused_velocity.dot(contact_normal);
@@ -80,9 +91,10 @@ public:
     real delta_velocity = sep_v - sep_velocity;
 
     real total_inverse_mass =
-        particles.p1.get_inverse_mass();
+        particles.ps[0]->get_inverse_mass();
     if (particles.is_double) {
-      total_inverse_mass += particles.p2.get_inverse_mass();
+      total_inverse_mass +=
+          particles.ps[1]->get_inverse_mass();
     }
 
     if (total_inverse_mass <= 0)
@@ -95,18 +107,19 @@ public:
     v3 impulse_per_inverse_mass = contact_normal * impulse;
 
     // apply the impulse
-    v3 p1_velocity = particles.p1.get_velocity();
-    real p1_inverse_mass = particles.p1.get_inverse_mass();
+    v3 p1_velocity = particles.ps[0]->get_velocity();
+    real p1_inverse_mass =
+        particles.ps[0]->get_inverse_mass();
     impulse_per_inverse_mass *= p1_inverse_mass;
-    particles.p1.set_velocity(p1_velocity +
-                              impulse_per_inverse_mass);
+    particles.ps[0]->set_velocity(p1_velocity +
+                                  impulse_per_inverse_mass);
     if (particles.is_double) {
-      v3 p2_velocity = particles.p2.get_velocity();
+      v3 p2_velocity = particles.ps[1]->get_velocity();
       real p2_inverse_mass =
-          particles.p2.get_inverse_mass();
-      particles.p2.set_velocity(p2_velocity +
-                                impulse_per_inverse_mass *
-                                    (-p2_inverse_mass));
+          particles.ps[1]->get_inverse_mass();
+      particles.ps[1]->set_velocity(
+          p2_velocity +
+          impulse_per_inverse_mass * (-p2_inverse_mass));
     }
   }
 
@@ -117,9 +130,10 @@ public:
 
     //
     real total_inverse_mass =
-        particles.p1.get_inverse_mass();
+        particles.ps[0]->get_inverse_mass();
     if (particles.is_double) {
-      total_inverse_mass += particles.p2.get_inverse_mass();
+      total_inverse_mass +=
+          particles.ps[1]->get_inverse_mass();
     }
     if (total_inverse_mass <= 0)
       return;
@@ -129,22 +143,24 @@ public:
         contact_normal * (penetration / total_inverse_mass);
 
     //
-    particle_movement[0] = move_per_inverse_mass *
-                           particles.p1.get_inverse_mass();
+    particle_movement[0] =
+        move_per_inverse_mass *
+        particles.ps[0]->get_inverse_mass();
     if (particles.is_double) {
       particle_movement[1] =
           move_per_inverse_mass *
-          (-particles.p2.get_inverse_mass());
+          (-particles.ps[1]->get_inverse_mass());
     } else {
       particle_movement[1].clear();
     }
 
     // compute new position of the particle
-    particles.p1.set_position(particles.p1.get_position() +
-                              particle_movement[0]);
+    particles.ps[0]->set_position(
+        particles.ps[0]->get_position() +
+        particle_movement[0]);
     if (particles.is_double) {
-      particles.p2.set_position(
-          particles.p2.get_position() +
+      particles.ps[1]->set_position(
+          particles.ps[1]->get_position() +
           particle_movement[1]);
     }
   }
@@ -192,13 +208,13 @@ public:
       //
       auto max_contact = contacts[max_index];
       max_contact.resolve(duration);
-      auto max_contact_p1 = max_contact.particles.p1;
-      auto max_contact_p2 = max_contact.particles.p2;
+      auto max_contact_p1 = max_contact.particles.ps[0];
+      auto max_contact_p2 = max_contact.particles.ps[1];
 
       // update particles
       v3 *move = max_contact.particle_movement;
       for (auto &contact : contacts) {
-        auto p1 = contact.particles.p1;
+        auto p1 = contact.particles.ps[0];
         auto is_double = contact.particles.is_double;
         if (p1 == max_contact_p1) {
           contact.penetration -=
@@ -208,7 +224,7 @@ public:
               move[1].dot(contact.contact_normal);
         }
         if (is_double) {
-          auto p2 = contact.particles.p2;
+          auto p2 = contact.particles.ps[1];
           if (p2 == max_contact_p1) {
             contact.penetration +=
                 move[0].dot(contact.contact_normal);

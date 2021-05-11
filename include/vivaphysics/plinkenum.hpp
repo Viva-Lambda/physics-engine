@@ -7,5 +7,6 @@ enum class ParticleContactGeneratorType {
   ROD = 1,
   CABLE_CONSTRAINT = 2,
   ROD_CONSTRAINT = 3,
+  GROUND = 4,
 };
 };

@@ -10,11 +10,12 @@ using namespace vivaphysics;
 namespace vivaphysics {
 
 struct ParticleLink {
-  ContactParticles particle;
+  ContactParticles contact_ps;
 
   real current_length() const {
-    v3 relative_position = particle.p1.get_position() -
-                           particle.p2.get_position();
+    v3 relative_position =
+        contact_ps.ps[0]->get_position() -
+        contact_ps.ps[1]->get_position();
     return relative_position.magnitude();
   }
 };
@@ -31,13 +32,13 @@ struct ParticleRod : ParticleLink {
   ParticleRod() {}
 };
 struct ParticleConstraint {
-  ContactParticles particle;
+  ContactParticles contact_ps;
   v3 anchor;
 
   real current_length() const {
     //
     v3 relative_position =
-        particle.p1.get_position() - anchor;
+        contact_ps.ps[0]->get_position() - anchor;
     return relative_position.magnitude();
   }
 };
@@ -51,8 +52,13 @@ struct ParticleRodConstraint : ParticleConstraint {
   ParticleRodConstraint() {}
 };
 
+struct GroundContacts {
+  Particles particles;
+  GroundContacts(Particles &ps) : particles(ps) {}
+};
+
 struct ParticleContactWrapper {
-  ContactParticles particle;
+  ContactParticles contact_ps;
   real length_max_length;
   real restitution;
   v3 anchor;
@@ -61,41 +67,46 @@ struct ParticleContactWrapper {
 
   ParticleContactWrapper(const ParticleCable &c)
       : length_max_length(c.max_length),
-        restitution(c.restitution), particle(c.particle),
+        restitution(c.restitution),
+        contact_ps(c.contact_ps),
         type(ParticleContactGeneratorType::CABLE) {}
 
   ParticleContactWrapper(const ParticleRod &r)
-      : length_max_length(r.length), particle(r.particle),
+      : length_max_length(r.length),
+        contact_ps(r.contact_ps),
         type(ParticleContactGeneratorType::ROD) {}
 
   ParticleContactWrapper(const ParticleCableConstraint &c)
       : length_max_length(c.max_length),
-        restitution(c.restitution), particle(c.particle),
-        anchor(c.anchor),
+        restitution(c.restitution),
+        contact_ps(c.contact_ps), anchor(c.anchor),
         type(ParticleContactGeneratorType::
                  CABLE_CONSTRAINT) {}
 
   ParticleContactWrapper(const ParticleRodConstraint &r)
-      : length_max_length(r.length), particle(r.particle),
-        anchor(r.anchor),
+      : length_max_length(r.length),
+        contact_ps(r.contact_ps), anchor(r.anchor),
         type(ParticleContactGeneratorType::ROD_CONSTRAINT) {
   }
+  ParticleContactWrapper(const GroundContacts &g)
+      : type(ParticleContactGeneratorType::GROUND),
+        contact_ps(g.particles) {}
   ParticleCable to_cable() const {
     ParticleCable cable;
-    cable.particle = particle;
+    cable.contact_ps = contact_ps;
     cable.max_length = length_max_length;
     cable.restitution = restitution;
     return cable;
   }
   ParticleRod to_rod() const {
     ParticleRod rod;
-    rod.particle = particle;
+    rod.contact_ps = contact_ps;
     rod.length = length_max_length;
     return rod;
   }
   ParticleCableConstraint to_cable_constraint() const {
     ParticleCableConstraint c;
-    c.particle = particle;
+    c.contact_ps = contact_ps;
     c.anchor = anchor;
     c.max_length = length_max_length;
     c.restitution = restitution;
@@ -103,10 +114,15 @@ struct ParticleContactWrapper {
   }
   ParticleRodConstraint to_rod_constraint() const {
     ParticleRodConstraint c;
-    c.particle = particle;
+    c.contact_ps = contact_ps;
     c.anchor = anchor;
     c.length = length_max_length;
     return c;
+  }
+  GroundContacts to_ground() const {
+    auto particles = contact_ps.ps;
+    auto gc = GroundContacts(particles);
+    return gc;
   }
 };
 
@@ -124,11 +140,11 @@ template <> struct ParticleContactGenerator<ParticleCable> {
     if (length < cable.max_length) {
       return 0;
     }
-    contact[contact_start].particles = cable.particle;
+    contact[contact_start].particles = cable.contact_ps;
 
     // calculate the normal
-    v3 normal = cable.particle.p2.get_position() -
-                cable.particle.p1.get_position();
+    v3 normal = cable.contact_ps.ps[1]->get_position() -
+                cable.contact_ps.ps[0]->get_position();
     normal.normalize();
     contact[contact_start].contact_normal = normal;
     contact[contact_start].penetration =
@@ -152,11 +168,11 @@ template <> struct ParticleContactGenerator<ParticleRod> {
     if (cur_length == rod.length) {
       return 0;
     }
-    contact[contact_start].particles = rod.particle;
+    contact[contact_start].particles = rod.contact_ps;
 
     // calculate the normal
-    v3 normal = rod.particle.p2.get_position() -
-                rod.particle.p1.get_position();
+    v3 normal = rod.contact_ps.ps[1]->get_position() -
+                rod.contact_ps.ps[0]->get_position();
     normal.normalize();
 
     if (cur_length > rod.length) {
@@ -190,12 +206,13 @@ struct ParticleContactGenerator<ParticleCableConstraint> {
     if (cur_length < cable.max_length) {
       return 0;
     }
-    contact[contact_start].particles.p1 = cable.particle.p1;
+    contact[contact_start].particles.ps[0] =
+        cable.contact_ps.ps[0];
     contact[contact_start].particles.is_double = false;
 
     // calculate the normal
-    v3 normal =
-        cable.anchor - cable.particle.p1.get_position();
+    v3 normal = cable.anchor -
+                cable.contact_ps.ps[0]->get_position();
     normal.normalize();
     contact[contact_start].contact_normal = normal;
 
@@ -222,11 +239,12 @@ struct ParticleContactGenerator<ParticleRodConstraint> {
     if (cur_length == rod.length) {
       return 0;
     }
-    contact[contact_start].particles.p1 = rod.particle.p1;
+    contact[contact_start].particles = rod.contact_ps;
     contact[contact_start].particles.is_double = false;
 
     // calculate the normal
-    v3 normal = rod.anchor - rod.particle.p1.get_position();
+    v3 normal =
+        rod.anchor - rod.contact_ps.ps[0]->get_position();
     normal.normalize();
 
     if (cur_length > rod.length) {
@@ -241,6 +259,32 @@ struct ParticleContactGenerator<ParticleRodConstraint> {
     // no bounciness
     contact[contact_start].restitution = 0;
     return 1;
+  }
+};
+
+template <>
+struct ParticleContactGenerator<GroundContacts> {
+  unsigned int
+  add_contact(const GroundContacts &gs,
+              std::vector<ParticleContact> &contacts,
+              unsigned int contact_start,
+              unsigned int contact_end) {
+    unsigned int count = 0;
+    for (auto &particle_ptr : gs.particles) {
+      real y = particle_ptr->get_position().y;
+      if (y < 0.0) {
+        contacts[contact_start].contact_normal = v3::UP;
+        contacts[contact_start].particles = *particle_ptr;
+        contacts[contact_start].particles.is_double = false;
+        contacts[contact_start].penetration = -y;
+        contacts[contact_start].restitution = 0.2f;
+        contact_start++;
+        count++;
+      }
+      if (count >= contact_end)
+        return count;
+    }
+    return count;
   }
 };
 
@@ -284,6 +328,12 @@ struct ParticleContactGenerator<ParticleContactWrapper> {
       retval = pcg4.add_contact(c4, contact, contact_start,
                                 contact_end);
       break;
+    }
+    case ParticleContactGeneratorType::GROUND: {
+      auto c5 = w.to_ground();
+      ParticleContactGenerator<GroundContacts> pcg_gc;
+      retval = pcg_gc.add_contact(
+          c5, contact, contact_start, contact_end);
     }
     }
     return retval;

@@ -14,5 +14,10 @@ public:
   vivaphysics::ParticleWorld world;
   std::vector<std::shared_ptr<vivaphysics::Particle>>
       particles;
+  vivaphysics::ParticleContactGenerator<GroundContacts>
+      ground_contact_gen;
+  MassAggregateApp(unsigned int particle_count): world(particle_count * 10, 0){
+      //
+  }
 };
 };

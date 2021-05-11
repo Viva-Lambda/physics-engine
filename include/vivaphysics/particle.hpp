@@ -164,4 +164,7 @@ public:
 
   /**@}*/
 };
+
+typedef std::vector<std::shared_ptr<Particle>> Particles;
+
 };

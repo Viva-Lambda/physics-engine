@@ -10,7 +10,6 @@ using namespace vivaphysics;
 
 namespace vivaphysics {
 
-typedef std::vector<std::shared_ptr<Particle>> Particles;
 typedef std::vector<
     ParticleContactGenerator<ParticleContactWrapper>>
     ContactGenerators;
@@ -96,36 +95,6 @@ public:
   }
   void get_force_registry(ParticleForceRegistry &fs) {
     fs = registry;
-  }
-};
-struct GroundContacts {
-  Particles particles;
-  GroundContacts(Particles &ps) : particles(ps) {}
-};
-template <>
-struct ParticleContactGenerator<GroundContacts> {
-  unsigned int
-  add_contact(const GroundContacts &gs,
-              std::vector<ParticleContact> &contacts,
-              unsigned int contact_start,
-              unsigned int contact_end) {
-    unsigned int count = 0;
-    for (auto &particle_ptr : gs.particles) {
-      real y = particle_ptr->get_position().y;
-      if (y < 0.0) {
-        contacts[contact_start].contact_normal = v3::UP;
-        contacts[contact_start].particles.p1 =
-            *particle_ptr;
-        contacts[contact_start].particles.is_double = false;
-        contacts[contact_start].penetration = -y;
-        contacts[contact_start].restitution = 0.2f;
-        contact_start++;
-        count++;
-      }
-      if (count >= contact_end)
-        return count;
-    }
-    return count;
   }
 };
 };
