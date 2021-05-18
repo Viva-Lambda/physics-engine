@@ -155,4 +155,5 @@ void make_orthonormal_basis(const v3 &a, const v3 &b,
   out[1] = cnorm;
   out[2] = cnorm.cross_product(anorm);
 }
+
 };

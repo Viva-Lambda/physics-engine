@@ -12,12 +12,28 @@ class MassAggregateApp : public MeshDemoApp {
   //
 public:
   vivaphysics::ParticleWorld world;
-  std::vector<std::shared_ptr<vivaphysics::Particle>>
-      particles;
-  vivaphysics::ParticleContactGenerator<GroundContacts>
+  Particles particles;
+  vivaphysics::ParticleContactGenerator<
+      vivaphysics::ParticleContactWrapper>
       ground_contact_gen;
-  MassAggregateApp(unsigned int particle_count): world(particle_count * 10, 0){
-      //
+  vivaphysics::ParticleContactWrapper gcontact_wrapper;
+  //
+  MassAggregateApp(unsigned int particle_count)
+      : world(particle_count * 10, 0) {
+    //
+    particles = std::vector<std::shared_ptr<Particle>>();
+    for (unsigned int i = 0; i < particle_count; i++) {
+      auto particle_ptr = std::make_shared<Particle>();
+      particles.push_back(particle_ptr);
+      world.particles.push_back(particle_ptr);
+    }
+    //
+    auto gcontact = GroundContacts(world.particles);
+    gcontact_wrapper = ParticleContactWrapper(gcontact);
+    ground_contact_gen =
+        ParticleContactGenerator<ParticleContactWrapper>();
+    world.add_contact_generator.push_back(
+        ground_contact_gen, gcontact_wrapper);
   }
 };
 };

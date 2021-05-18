@@ -22,3 +22,11 @@ void initializeGLFWMajorMinor(unsigned int maj,
   glfwWindowHint(GLFW_OPENGL_PROFILE,
                  GLFW_OPENGL_CORE_PROFILE);
 }
+
+template <typename T> T clamp(T nb, T mn, T mx) {
+  if (nb < mn)
+    nb = mn;
+  if (nb > mx)
+    nb = mx;
+  return nb;
+}
