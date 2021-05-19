@@ -21,7 +21,7 @@ protected:
 public:
   DemoApp() {}
   DemoApp(int w, int h, std::string title)
-      : width(w), height(h), window_title(title) {}
+      : height(h), width(w), window_title(title) {}
 
   virtual void default_map() {
     auto wind = window;

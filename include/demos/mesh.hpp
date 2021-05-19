@@ -54,14 +54,14 @@ public:
   TriangleSurface(const Vertex &v1, const Vertex &v2,
                   const Vertex &v3, Texture *txts,
                   unsigned int tnb)
-      : textures(txts), texture_nb(tnb), p1(v1), p2(v2),
-        p3(v3) {
+      : p1(v1), p2(v2), p3(v3), textures(txts),
+        texture_nb(tnb) {
     setup();
   }
   TriangleSurface(Vertex vs[element_nb], Texture *txts,
                   unsigned int tnb)
-      : textures(txts), texture_nb(tnb), p1(vs[0]),
-        p2(vs[1]), p3(vs[2]) {
+      : p1(vs[0]), p2(vs[1]), p3(vs[2]), textures(txts),
+        texture_nb(tnb) {
     setup();
   }
 
@@ -155,7 +155,7 @@ public:
     unsigned int roughNb = 1;
     unsigned int metalNb = 1;
     unsigned int albedoNb = 1;
-    for (int i = 0; i < texture_nb; i++) {
+    for (unsigned int i = 0; i < texture_nb; i++) {
       glActiveTexture(GL_TEXTURE0 + i);
       std::string nb;
       TextureType ttype = textures[i].type;
@@ -223,7 +223,7 @@ public:
     }
   }
   Mesh(const Mesh &m)
-      : ts(m.ts), nb_triangles(m.nb_triangles) {}
+      : nb_triangles(m.nb_triangles), ts(m.ts) {}
   void draw(Shader shdr) {
     for (unsigned int i = 0; i < nb_triangles; i++) {
       //

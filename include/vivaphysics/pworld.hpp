@@ -42,12 +42,6 @@ struct ContactGenerators {
 //
 class ParticleWorld {
 public:
-  // constructor
-  ParticleWorld(unsigned int max_contacts,
-                unsigned int iterations)
-      : resolver(iterations),
-        compute_iterations(iterations == 0),
-        max_contact_nb(max_contacts) {}
   /**holds the particles*/
   Particles particles;
 
@@ -61,6 +55,13 @@ public:
 
   std::vector<ParticleContact> contacts;
   unsigned int max_contact_nb;
+
+  // constructor
+  ParticleWorld(unsigned int max_contacts,
+                unsigned int iterations)
+      : compute_iterations(iterations == 0),
+        resolver(iterations),
+        max_contact_nb(max_contacts) {}
 
   void add_contact_generator(
       const ParticleContactGenerator<ParticleContactWrapper>

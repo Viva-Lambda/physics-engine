@@ -78,7 +78,16 @@ add_executable(
 
 target_link_libraries(BallisticDemo.out glfwLib)
 
+# platform demo
+add_executable(
+    PlatformDemo.out 
+    "src/demos/glad.c"
+    "src/demos/platform.cpp"
+    )
+target_link_libraries(PlatformDemo.out glfwLib)
+
 install(TARGETS main.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS demoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS MeshDemoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS BallisticDemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
+install(TARGETS PlatformDemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")

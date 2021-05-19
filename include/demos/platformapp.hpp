@@ -17,6 +17,7 @@ const unsigned int EXTRA_MASS = 10;
 const unsigned int ROD_COUNT = 15;
 
 class PlatformDemo : public MassAggregateApp {
+public:
   std::vector<vivaphysics::ParticleRod> rods;
   vivaphysics::v3 mass_position;
   vivaphysics::v3 mass_display_position;
@@ -42,9 +43,9 @@ class PlatformDemo : public MassAggregateApp {
       p->clear_accumulator();
     }
     // set particle rods
-    auto rod_maker = [&particles](
-        unsigned int pindex1, unsigned int pindex2,
-        vivaphysics::real length = 2) {
+    auto rod_maker = [this](unsigned int pindex1,
+                            unsigned int pindex2,
+                            vivaphysics::real length = 2) {
       ContactParticles cp;
 
       cp.ps.push_back(particles[pindex1]);
@@ -52,7 +53,7 @@ class PlatformDemo : public MassAggregateApp {
       cp.is_double = true;
       ParticleRod rod = ParticleRod();
       rod.length = length;
-      rod.contact_ps = cps;
+      rod.contact_ps = cp;
       return rod;
     };
 
@@ -88,8 +89,8 @@ class PlatformDemo : public MassAggregateApp {
     for (unsigned int i = 2; i < 6; i++) {
       particles[i]->set_mass(BASE_MASS);
     }
-    vivaphysics::real xp = mass_position.x();
-    vivaphysics::real zp = mass_position.z();
+    vivaphysics::real xp = mass_position.x;
+    vivaphysics::real zp = mass_position.z;
     xp = clamp<real>(xp, 0, 1);
     zp = clamp<real>(zp, 0, 1);
 
@@ -125,7 +126,7 @@ class PlatformDemo : public MassAggregateApp {
   void set_scene_objects() override {}
 
   int init_graphics() override {
-    DemoApp::init_graphics();
+    MassAggregateApp::init_graphics();
     set_related();
     // init shaders
     return init_shaders();

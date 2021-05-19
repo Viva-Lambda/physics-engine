@@ -9,7 +9,6 @@ namespace vivaphysics {
   do {                                                     \
     bool res = call;                                       \
     if (!res) {                                            \
-    std:                                                   \
       std::stringstream txt;                               \
       txt << #call << " :: "                               \
           << "false"                                       \

@@ -32,8 +32,8 @@ public:
     gcontact_wrapper = ParticleContactWrapper(gcontact);
     ground_contact_gen =
         ParticleContactGenerator<ParticleContactWrapper>();
-    world.add_contact_generator.push_back(
-        ground_contact_gen, gcontact_wrapper);
+    world.add_contact_generator(ground_contact_gen,
+                                gcontact_wrapper);
   }
 };
 };

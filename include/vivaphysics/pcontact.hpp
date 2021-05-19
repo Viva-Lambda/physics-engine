@@ -253,7 +253,7 @@ template <class T> struct ParticleContactGenerator {
 
     \param obj generator object
    */
-  static unsigned int
+  unsigned int
   add_contact(T &obj, std::vector<ParticleContact> &contact,
               unsigned int contact_limit) {
     return 0;

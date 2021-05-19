@@ -1,6 +1,9 @@
 #pragma once
 // utilty functions for demo application
 #include <external.hpp>
+
+namespace vivademos {
+
 void framebuffer_size_callback(GLFWwindow *window,
                                int newWidth,
                                int newHeight) {
@@ -30,3 +33,4 @@ template <typename T> T clamp(T nb, T mn, T mx) {
     nb = mx;
   return nb;
 }
+};

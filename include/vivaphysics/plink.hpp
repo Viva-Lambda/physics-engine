@@ -66,26 +66,26 @@ struct ParticleContactWrapper {
   ParticleContactWrapper() {}
 
   ParticleContactWrapper(const ParticleCable &c)
-      : length_max_length(c.max_length),
+      : contact_ps(c.contact_ps),
+        length_max_length(c.max_length),
         restitution(c.restitution),
-        contact_ps(c.contact_ps),
         type(ParticleContactGeneratorType::CABLE) {}
 
   ParticleContactWrapper(const ParticleRod &r)
-      : length_max_length(r.length),
-        contact_ps(r.contact_ps),
+      : contact_ps(r.contact_ps),
+        length_max_length(r.length),
         type(ParticleContactGeneratorType::ROD) {}
 
   ParticleContactWrapper(const ParticleCableConstraint &c)
-      : length_max_length(c.max_length),
-        restitution(c.restitution),
-        contact_ps(c.contact_ps), anchor(c.anchor),
+      : contact_ps(c.contact_ps),
+        length_max_length(c.max_length),
+        restitution(c.restitution), anchor(c.anchor),
         type(ParticleContactGeneratorType::
                  CABLE_CONSTRAINT) {}
 
   ParticleContactWrapper(const ParticleRodConstraint &r)
-      : length_max_length(r.length),
-        contact_ps(r.contact_ps), anchor(r.anchor),
+      : contact_ps(r.contact_ps),
+        length_max_length(r.length), anchor(r.anchor),
         type(ParticleContactGeneratorType::ROD_CONSTRAINT) {
   }
   ParticleContactWrapper(const GroundContacts &g)

@@ -155,7 +155,7 @@ public:
   v3 get_accumulated_force() const {
     return accumulated_force;
   }
-  v3 add_force(const v3 &v) {
+  void add_force(const v3 &v) {
     accumulated_force =
         v3(v.to_glm() + accumulated_force.to_glm());
   }

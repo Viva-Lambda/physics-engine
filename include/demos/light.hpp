@@ -41,7 +41,7 @@ public:
   float yaw, pitch;
   DirectionalLight(color lightColor, vec3 wup,
                    float y = LYAW, float p = LPITCH)
-      : Light(lightColor), yaw(y), pitch(p), worldUp(wup) {
+      : Light(lightColor), worldUp(wup), yaw(y), pitch(p) {
     updateDirection();
   }
   void setYaw(float val) {
@@ -91,7 +91,8 @@ public:
   glm::mat4 getViewMatrix() {
     vec3 target = position - front;
     vec3 lightDir = glm::normalize(position - target);
-    vec3 rightDir = glm::normalize(glm::cross(up, lightDir));
+    vec3 rightDir =
+        glm::normalize(glm::cross(up, lightDir));
     glm::vec3 realUp =
         glm::normalize(glm::cross(lightDir, rightDir));
     //

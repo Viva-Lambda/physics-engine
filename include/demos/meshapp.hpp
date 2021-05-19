@@ -184,7 +184,8 @@ public:
                          near_plane_dist, far_plane_dist);
     viewMat = camera.getViewMatrix();
 
-    glm::mat4 lightProj, lightSpaceMat, lightView;
+    glm::mat4 lightProj;
+    glm::mat4 lightView;
     lightView = glm::lookAt(light.position, glm::vec3(0.0),
                             glm::vec3(0.0, 1.0, 0.0));
     lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f,
@@ -588,9 +589,9 @@ public:
     print_move_obj_keys();
     print_other_keys();
   }
-  virtual void print_other_keys() {}
 
   void render_text(int x, int y, std::string txt,
                    void *font = nullptr) override {}
+  virtual void print_other_keys() {}
 };
 };

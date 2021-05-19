@@ -14,7 +14,7 @@ template <class T> struct ParticleForceGenerator {
    * particle*/
   void update_force(const T &generator,
                     std::shared_ptr<Particle> p,
-                    real duration) {}
+                    real duration);
 };
 
 struct ParticleGravity {
