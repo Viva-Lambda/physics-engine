@@ -18,6 +18,11 @@ const unsigned int ROD_COUNT = 15;
 
 class PlatformDemo : public MassAggregateApp {
 public:
+  // shaders
+  Shader line_shader;
+  SimpleShape lines;
+  vivaphysics::v3 line_color;
+
   std::vector<vivaphysics::ParticleRod> rods;
   vivaphysics::v3 mass_position;
   vivaphysics::v3 mass_display_position;
@@ -25,6 +30,14 @@ public:
   std::string window_title = "Platform Demo";
   PlatformDemo()
       : MassAggregateApp(6), mass_position(0, 0, 0.5f) {
+    init();
+  }
+  PlatformDemo(int w, int h, std::string t)
+      : MassAggregateApp(6, w, h, t),
+        mass_position(0, 0, 0.5f) {
+    init();
+  }
+  void init() {
 
     // set particle positions
     particles[0]->set_position(0, 0, 1);
@@ -123,13 +136,52 @@ public:
     }
   }
 
-  void set_scene_objects() override {}
+  virtual int init_shaders() override {
+    lamp_shader = mk_pointlight_lamp_shader();
+    lamp_shader.useProgram();
+    lamp_shader.setVec3Uni("lightColor", light.emitColor);
 
-  int init_graphics() override {
-    MassAggregateApp::init_graphics();
-    set_related();
-    // init shaders
-    return init_shaders();
+    // set object shader values
+    obj_shader = mk_const_color_mesh_shader();
+
+    obj_shader.useProgram();
+    float ambientCoeff = 0.1f;
+    glm::vec3 attc(1.0f, 0.0f, 0.0f);
+    obj_shader.setFloatUni("ambientCoeff", ambientCoeff);
+    obj_shader.setVec3Uni("attC", attc);
+    obj_shader.setVec3Uni("diffColor",
+                          glm::vec3(0.8, 0.6, 0.3));
+    // texture
+    obj_shader.setIntUni("shadowMap", 0);
+
+    // set plane shader for ground
+    plane_shader = mk_const_color_mesh_shader();
+    plane_shader.useProgram();
+    plane_shader.setFloatUni("ambientCoeff", ambientCoeff);
+    plane_shader.setVec3Uni("attC", attc);
+    plane_shader.setVec3Uni("diffColor",
+                            glm::vec3(0.8, 0.8, 0.6));
+    // texture
+    plane_shader.setIntUni("shadowMap", 0);
+
+    // make line shader
+    line_shader = mk_line_shader();
+    line_shader.useProgram();
+    line_shader.setVec3Uni("lightColor",
+                           line_color.to_glm());
+
+    // depth shader for shadows
+    depth_shader = mk_depth_shader();
+    set_view();
+    return 0;
+  }
+  virtual void set_scene_objects() override {
+    cube = SimpleShape(1, false, ShapeChoice::CUBE);
+    lamp = SimpleShape(1, false, ShapeChoice::LAMP);
+    plane = SimpleShape(1, false, ShapeChoice::PLANE);
+
+    lines =
+        SimpleShape(ROD_COUNT, false, ShapeChoice::LINE);
   }
 
   void set_view() override {
@@ -140,54 +192,68 @@ public:
                          near_plane_dist, far_plane_dist);
     viewMat = camera.getViewMatrix();
 
-    glm::mat4 lightProj, lightSpaceMat, lightView;
+    glm::mat4 lightProj;
+    glm::mat4 lightView;
     lightView = glm::lookAt(light.position, glm::vec3(0.0),
                             glm::vec3(0.0, 1.0, 0.0));
     lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f,
                            1.0f, 7.5f);
     lightSpaceMatrix = lightProj * lightView;
   }
-  void render_scene_depth() override {
-    depth_shader.useProgram();
-    depth_shader.setMat4Uni("lightSpaceMatrix",
-                            lightSpaceMatrix);
-    glm::mat4 identityModel = glm::mat4(1.0f);
 
-    // draw scene from light's perspective
-    depth_shader.setMat4Uni("model", modelMat);
-    cube.draw();
+  void render_line() {
+    std::vector<std::array<glm::vec3, 2>> verts;
+    for (unsigned int i = 0; i < ROD_COUNT; i++) {
+      ParticleRod rod = rods[i];
+      ContactParticles contact_particles = rod.contact_ps;
+      Particles ps = contact_particles.ps;
+      D_CHECK_MSG(contact_particles.is_double,
+                  "cotanct particles must be double");
+      auto p1pos = ps[0]->get_position();
+      auto p2pos = ps[1]->get_position();
+      std::array<glm::vec3, 2> vs = {p1pos, p2pos};
+      verts.push_back(vs);
+    }
+    line_shader.useProgram();
+    modelMat = glm::mat4(1.0f);
+    modelMat = glm::translate(
+        modelMat, mass_display_position.to_glm());
+    line_shader.setVec3Uni("lightColor", glm::vec3(1.0f));
 
-    depth_shader.setMat4Uni("model", identityModel);
-    plane.draw();
-
-    // depth_shader.setMat4Uni("model", lampMat);
-    // lamp.draw();
+    lines.draw_line(verts);
   }
-  void draw_to_depth_fbo() override {
-    // render to depth fbo
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  void draw_objects() {
 
-    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    /** draw scene from light's perspective */
+    draw_to_depth_fbo();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    render_scene_depth();
+    /** reset viewport after depth rendering */
+    reset_frame();
 
-    // lightModel = glm::translate(lightModel,
-    // light.position);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    /** render scene objects to scene */
+    obj_shader.useProgram();
+
+    /** bind depth texture */
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, depth_texture);
+
+    /** set object view and projection matrix */
+    set_object_vp();
+
+    /** draw scene objects */
+    render_scene_objects();
+
+    /** draw plane on which we can see the shadows */
+    render_plane();
+
+    // done with depth texture
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    /** draw lamp object */
+    render_lamp();
+
+    /** draw line object*/
+    render_line();
   }
-
-  void render_scene_objects() override {
-    // draw objects that need to be drawn
-    obj_shader.setVec3Uni("diffColor",
-                          glm::vec3(0.2, 0.7, 0.2));
-
-    obj_shader.setMat4Uni("model", modelMat);
-    cube.draw();
-  }
-
-  void process_other_keys() override {}
 };
 };

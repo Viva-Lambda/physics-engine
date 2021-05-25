@@ -38,6 +38,14 @@ void setVertexAttrib(const VertexAttrib *vs,
     voffset += v.size * sizeof(float);
   }
 }
+
+void setVertexAttrib(std::array<VertexAttrib, 1> vs) {
+
+  // deal with size
+  std::sort(vs.begin(), vs.end(),
+            compareAttribs); // 1,2,3,4
+  setVertexAttrib(vs.data(), vs.size());
+}
 void setVertexAttrib(std::array<VertexAttrib, 2> vs) {
 
   // deal with size
@@ -186,6 +194,37 @@ void renderLamp() {
   glBindVertexArray(0);
   glDeleteVertexArrays(1, &lightVao);
   glDeleteBuffers(1, &vbo);
+}
+
+void renderLine(float vert[6]) {
+  GLuint lineVAO, lineVBO;
+  //
+  glGenBuffers(1, &lineVBO);
+  glGenVertexArrays(1, &lineVAO);
+  glBindVertexArray(lineVAO);
+  glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vert), &vert,
+               GL_STATIC_DRAW);
+  // specify attributes
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+                        3 * sizeof(float), (void *)0);
+
+  glBindVertexArray(lineVAO);
+  glDrawArrays(GL_LINES, 0, 2);
+  glBindVertexArray(0);
+  glDeleteVertexArrays(1, &lineVAO);
+  glDeleteBuffers(1, &lineVBO);
+}
+
+void renderLine(glm::vec3 vert[2]) {
+  float vs[] = {vert[0].x, vert[0].y, vert[0].z,
+                vert[1].x, vert[1].y, vert[1].z};
+  renderLine(vs);
+}
+void render_line() {
+  float vs[] = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
+  renderLine(vs);
 }
 void renderCubeInTangentSpace(
     std::array<VertexAttrib, 5> vs) {

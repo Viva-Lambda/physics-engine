@@ -18,8 +18,17 @@ public:
       ground_contact_gen;
   vivaphysics::ParticleContactWrapper gcontact_wrapper;
   //
+  MassAggregateApp(unsigned int particle_count, int w,
+                   int h, std::string t)
+      : MeshDemoApp(w, h, t),
+        world(particle_count * 10, 0) {
+    init(particle_count);
+  }
   MassAggregateApp(unsigned int particle_count)
       : world(particle_count * 10, 0) {
+    init(particle_count);
+  }
+  void init(unsigned int particle_count) {
     //
     particles = std::vector<std::shared_ptr<Particle>>();
     for (unsigned int i = 0; i < particle_count; i++) {

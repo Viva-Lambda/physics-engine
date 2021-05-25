@@ -244,24 +244,34 @@ enum class ShapeChoice {
   QUAD = 2,
   LAMP = 3,
   PLANE = 4,
+  LINE = 5
 };
 std::ostream &operator<<(std::ostream &out, ShapeChoice s) {
   switch (s) {
-  case ShapeChoice::CUBE:
+  case ShapeChoice::CUBE: {
     return out << "ShapeChoice::CUBE";
     break;
-  case ShapeChoice::CUBE_D:
+  }
+  case ShapeChoice::CUBE_D: {
     return out << "ShapeChoice::CUBE_D";
     break;
-  case ShapeChoice::LAMP:
+  }
+  case ShapeChoice::LAMP: {
     return out << "ShapeChoice::LAMP";
     break;
-  case ShapeChoice::PLANE:
+  }
+  case ShapeChoice::PLANE: {
     return out << "ShapeChoice::PLANE";
     break;
-  case ShapeChoice::QUAD:
+  }
+  case ShapeChoice::QUAD: {
     return out << "ShapeChoice::QUAD";
     break;
+  }
+  case ShapeChoice::LINE: {
+    return out << "ShapeChoice::LINE";
+    break;
+  }
   }
 }
 
@@ -280,27 +290,40 @@ public:
   void draw() {
     std::function<void(void)> drawfn;
     switch (stype) {
-    case ShapeChoice::CUBE:
+    case ShapeChoice::CUBE: {
       drawfn = in_tangent ? renderCubeInTangentSpaceS
                           : renderCubeS;
       break;
-    case ShapeChoice::CUBE_D:
+    }
+    case ShapeChoice::CUBE_D: {
       drawfn = renderCubeD_S;
       break;
-
-    case ShapeChoice::LAMP:
+    }
+    case ShapeChoice::LAMP: {
       drawfn = renderLamp;
       break;
-    case ShapeChoice::QUAD:
+    }
+    case ShapeChoice::QUAD: {
       drawfn = renderQuadS;
       break;
-    case ShapeChoice::PLANE:
+    }
+    case ShapeChoice::PLANE: {
       drawfn = renderPlaneS;
       break;
+    }
+    case ShapeChoice::LINE: {
+      drawfn = render_line;
+      break;
+    }
     }
     for (unsigned int i = 0; i < nb_shape; i++) {
       drawfn();
     }
+  }
+  void draw_line(
+      const std::vector<std::array<glm::vec3, 2>> &verts) {
+    D_CHECK_MSG(verts.size() == nb_shape,
+                "vertex size must match number of shapes");
   }
 };
 

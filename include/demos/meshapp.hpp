@@ -97,7 +97,7 @@ public:
   std::string get_title() override {
     return "cube mesh viewer";
   }
-  int init_shaders() {
+  virtual int init_shaders() {
     lamp_shader = mk_pointlight_lamp_shader();
     lamp_shader.useProgram();
     lamp_shader.setVec3Uni("lightColor", light.emitColor);
@@ -176,7 +176,7 @@ public:
     // init shaders
     return init_shaders();
   }
-  void set_view() override {
+  virtual void set_view() override {
     // setting model, view, projection
     projection =
         glm::perspective(glm::radians(camera.zoom),

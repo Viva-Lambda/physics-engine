@@ -3,8 +3,8 @@
 using namespace vivademos;
 
 int main() {
-  auto demo = PlatformDemo();
-  // demo.init_graphics();
-  // demo.display();
+  auto demo = PlatformDemo(800, 600, "platform demo");
+  demo.init_graphics();
+  demo.display();
   return 0;
 }
