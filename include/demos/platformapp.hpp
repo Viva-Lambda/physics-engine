@@ -218,11 +218,13 @@ public:
     modelMat = glm::mat4(1.0f);
     modelMat = glm::translate(
         modelMat, mass_display_position.to_glm());
-    line_shader.setVec3Uni("lightColor", glm::vec3(1.0f));
+    line_shader.setVec3Uni("lightColor", glm::vec3(0.0f));
+    line_shader.setMat4Uni("model", modelMat);
 
     lines.draw_line(verts);
+    modelMat = glm::mat4(1.0f);
   }
-  void draw_objects() {
+  virtual void draw_objects() override {
 
     /** draw scene from light's perspective */
     draw_to_depth_fbo();

@@ -287,7 +287,7 @@ public:
     //
     lamp.draw();
   }
-  void draw_objects() {
+  virtual void draw_objects() {
 
     /** draw scene from light's perspective */
     draw_to_depth_fbo();

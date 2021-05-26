@@ -337,7 +337,7 @@ Shader mk_depth_shader() {
 }
 Shader mk_line_shader() {
   const GLchar *vertex_path =
-      "media/demos/glsl/basic_color_light.vert";
+      "media/demos/glsl/basic_point_light.vert";
   const GLchar *fragment_source =
       "media/demos/glsl/basic_color_light.frag";
   return Shader(vertex_path, fragment_source);

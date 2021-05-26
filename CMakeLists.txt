@@ -8,6 +8,7 @@ message(STATUS "Found GL in ${OPENGL_LIBRARY}")
 find_package (Threads REQUIRED)
 
 set (CMAKE_BUILD_TYPE "Debug")
+set (CMAKE_EXPORT_COMPILE_COMMANDS true)
 set (CMAKE_CXX_FLAGS "-std=c++17")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -ggdb -Wall -Wextra -ldl")
 
