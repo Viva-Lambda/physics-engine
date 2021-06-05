@@ -10,6 +10,10 @@
 using namespace vivademos;
 namespace vivademos {
 
+class MeshPhyApp : public PhyApp {
+  //
+};
+
 class MeshDemoApp : public DemoApp {
 protected:
   // window size related
