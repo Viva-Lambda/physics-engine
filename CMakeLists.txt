@@ -55,9 +55,19 @@ add_executable(
     "src/demos/glad.c"
     "src/demos/demowindow.cpp"
     )
-#target_link_libraries(final.out AssimpLib)
-
 target_link_libraries(demoAppTest.out glfwLib)
+
+# new application interface demo
+
+add_executable(
+    newdemo.out 
+    "src/demos/glad.c"
+    "src/demos/newapp.cpp"
+    )
+
+#target_link_libraries(final.out AssimpLib)
+target_link_libraries(newdemo.out glfwLib)
+
 
 add_executable(
     MeshDemoAppTest.out 
@@ -89,6 +99,7 @@ target_link_libraries(PlatformDemo.out glfwLib)
 
 install(TARGETS main.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS demoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
+install(TARGETS newdemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS MeshDemoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS BallisticDemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS PlatformDemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
