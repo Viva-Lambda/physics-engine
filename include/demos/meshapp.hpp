@@ -12,6 +12,53 @@ namespace vivademos {
 
 class MeshPhyApp : public PhyApp {
   //
+public:
+  std::vector<SimpleShape> shapes;
+  std::vector<Shader> shaders;
+  MeshPhyApp() {}
+  MeshPhyApp(unsigned int w, unsigned int h,
+             std::string title)
+      : PhyApp(w, h, title) {}
+
+  virtual bool init_graphics() override {
+    PhyApp::init_graphics();
+    // do class specific ops
+    // load static uniforms
+  }
+
+protected:
+  virtual void process_input() override {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+      glfwSetWindowShouldClose(window, true);
+    }
+    process_toggles();
+    if (!is_camera_locked) {
+      moveCamera();
+    }
+    if (!is_object_locked) {
+      moveObject();
+    }
+    if (!is_light_locked) {
+      moveLight();
+    }
+    // other child object keys
+
+    if ((glfwGetKey(window, GLFW_KEY_SPACE) ==
+         GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)) {
+      print_keys();
+    }
+  }
+
+  virtual void graphics_update() override {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  }
+
+  virtual bool clean_up_graphics() override {
+    glfwTerminate();
+    return true;
+  }
+  virtual void physics_update() override {}
 };
 
 class MeshDemoApp : public DemoApp {
@@ -350,11 +397,7 @@ public:
       key_map[key]();
     }
   }
-  void key(int key) override {
-    auto it = key_map.find(key);
-    D_CHECK_MSG(it != key_map.end(), "key not in key maps");
-    query_key(key);
-  }
+
   virtual void process_other_keys() {}
   /** process certain keys given in key map */
   void process_input() override {
@@ -597,5 +640,14 @@ public:
   void render_text(int x, int y, std::string txt,
                    void *font = nullptr) override {}
   virtual void print_other_keys() {}
+  virtual bool clean_up_graphics() {
+    glfwTerminate();
+    return true;
+  }
+
+  virtual bool clean_up() override {
+    bool is_cleaned_up = clean_up_graphics();
+    return is_cleaned_up;
+  }
 };
-};
+}; // namespace vivademos

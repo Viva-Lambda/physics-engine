@@ -72,7 +72,7 @@ public:
     glfwTerminate();
     return true;
   }
-  bool clean_up() {
+  virtual bool clean_up() {
     bool is_cleaned_up = clean_up_graphics();
     return is_cleaned_up;
   }
@@ -81,7 +81,7 @@ protected:
   bool m_is_running;
   GLFWwindow *window;
 
-  void process_input() {
+  virtual void process_input() {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
       glfwSetWindowShouldClose(window, true);
     }

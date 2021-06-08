@@ -68,9 +68,11 @@ protected:
 };
 class PointLight : public Light {
 public:
+  Transformable transform;
   point3 position;
   PointLight(color lightColor, point3 pos)
-      : Light(lightColor), position(pos) {}
+      : Light(lightColor) {
+      }
 };
 
 class SpotLight : public DirectionalLight,
