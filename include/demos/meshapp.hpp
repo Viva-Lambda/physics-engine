@@ -15,6 +15,13 @@ class MeshPhyApp : public PhyApp {
 public:
   std::vector<SimpleShape> shapes;
   std::vector<Shader> shaders;
+  struct mesh_locks {
+    bool cam;
+    bool light;
+    bool obj;
+  }; // camera, light, object locks respectively
+  mesh_locks locks;
+
   MeshPhyApp() {}
   MeshPhyApp(unsigned int w, unsigned int h,
              std::string title)
@@ -31,14 +38,13 @@ protected:
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
       glfwSetWindowShouldClose(window, true);
     }
-    process_toggles();
-    if (!is_camera_locked) {
+    if (!locks.cam) {
       moveCamera();
     }
-    if (!is_object_locked) {
+    if (!locks.light) {
       moveObject();
     }
-    if (!is_light_locked) {
+    if (!locks.obj) {
       moveLight();
     }
     // other child object keys

@@ -25,51 +25,52 @@ struct quat_c {
  */
 class q4 {
 public:
-  real r;
   //
-  quat_c b_i;
-  quat_c c_j;
-  quat_c d_k;
+  /**Taking variable names from Vince 2011 p. 53*/
+  real s;
+  quat_c x_i;
+  quat_c y_j;
+  quat_c z_k;
   //
   q4() {}
   q4(real x, real y, real z, real w)
-      : r(x), b_i(QUATERNION_BASE::I, y),
-        c_j(QUATERNION_BASE::J, z),
-        d_k(QUATERNION_BASE::K, w) {}
+      : s(x), x_i(QUATERNION_BASE::I, y),
+        y_j(QUATERNION_BASE::J, z),
+        z_k(QUATERNION_BASE::K, w) {}
   q4(real _r, const v3 &_v)
-      : r(_r), b_i(QUATERNION_BASE::I, _v.x),
-        c_j(QUATERNION_BASE::J, _v.y),
-        d_k(QUATERNION_BASE::K, _v.z) {}
-  q4(real _r, const quat_c &bi,
-     const quat_c &cj const quat_c &dk)
-      : r(_r), b_i(bi), c_j(cj), d_k(dk) {}
+      : s(_r), x_i(QUATERNION_BASE::I, _v.x),
+        y_j(QUATERNION_BASE::J, _v.y),
+        z_k(QUATERNION_BASE::K, _v.z) {}
+  q4(real _r, const quat_c &bi, const quat_c &cj,
+     const quat_c &dk)
+      : s(_r), x_i(bi), y_j(cj), z_k(dk) {}
 
   //
   std::array<real, 4> to_arr() const {
-    std::array<real, 4> arr = {a(), b_i(), c_j(), d_k()};
+    std::array<real, 4> arr = {r(), x(), y(), z()};
     return arr;
   }
   std::vector<real> to_vec() const {
-    std::vector<real> vs = {a(), b_i(), c_j(), d_k()};
+    std::vector<real> vs = {r(), x(), y(), z()};
     return vs;
   }
-  real scalar() const { return a(); }
-  v3 vector() const { return v3(b(), c(), d()); }
-  real a() const { return r; }
-  real b() const { return b_i.r; }
-  real c() const { return c_j.r; }
-  real d() const { return d_k.r; }
+  real scalar() const { return r(); }
+  v3 vector() const { return v3(x(), y(), z()); }
+  real r() const { return s; }
+  real x() const { return x_i.r; }
+  real y() const { return y_j.r; }
+  real z() const { return z_k.r; }
 
   q4 hamilton_product(const q4 &q) const {
     //
-    real a1 = a();
-    real a2 = q.a();
-    real b1 = b();
-    real b2 = q.b();
-    real c1 = c();
-    real c2 = q.c();
-    real d1 = d();
-    real d2 = q.d();
+    real a1 = r();
+    real a2 = q.r();
+    real b1 = x();
+    real b2 = q.x();
+    real c1 = y();
+    real c2 = q.y();
+    real d1 = z();
+    real d2 = q.z();
     auto a12 = a1 * a2;
     auto b12 = b1 * b2;
     auto c12 = c1 * c2;
@@ -85,10 +86,10 @@ public:
    Graphics p. 69
   */
   q4 conjugate() const {
-    auto a1 = a();
-    auto b1 = b();
-    auto c1 = c();
-    auto d1 = d();
+    auto a1 = r();
+    auto b1 = x();
+    auto c1 = y();
+    auto d1 = z();
     return q4(a1, -b1, -c1, -d1);
   }
   /**
@@ -160,20 +161,21 @@ public:
     Graphics p. 25
    */
   real determinant() const {
-    auto a2 = a() * a();
-    auto b2 = b() * b();
-    auto c2 = c() * c();
-    auto d2 = d() * d();
+    auto a2 = r() * r();
+    auto b2 = x() * x();
+    auto c2 = y() * y();
+    auto d2 = z() * z();
     return a2 + b2 + c2 + d2;
   }
   real det() const { return determinant(); }
   real magnitude() const { return norm(); }
-  friend std::cout &operator<<(std::cout &out, const q4 &q);
+  friend std::ostream &operator<<(std::ostream &out,
+                                  const q4 &q);
 };
-std::cout &operator<<(std::cout &out, const q4 &q) {
-  out << q.a() << " + " << q.b() << "i"
-      << " + " << q.c() << "j"
-      << " + " << q.d() << "k" << std::endl;
+std::ostream &operator<<(std::ostream &out, const q4 &q) {
+  out << q.r() << " + " << q.x() << "i"
+      << " + " << q.y() << "j"
+      << " + " << q.z() << "k" << std::endl;
   return out;
 }
 };
