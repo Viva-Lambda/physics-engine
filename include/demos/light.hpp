@@ -70,9 +70,8 @@ class PointLight : public Light {
 public:
   Transformable transform;
   point3 position;
-  PointLight(color lightColor, point3 pos)
-      : Light(lightColor) {
-      }
+  PointLight(const color &lightColor, const point3 &pos)
+      : Light(lightColor), transform(pos) {}
 };
 
 class SpotLight : public DirectionalLight,
