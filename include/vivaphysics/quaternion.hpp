@@ -22,11 +22,12 @@ struct quat_c {
 
 /**
   \brief Quaternion with real and vector components
+  Quaternion is expressed as q = scalar + xi + yj + zk
  */
 class q4 {
 public:
   //
-  /**Taking variable names from Vince 2011 p. 53*/
+  /** Taking variable names from Vince 2011 p. 53 */
   real s;
   quat_c x_i;
   quat_c y_j;

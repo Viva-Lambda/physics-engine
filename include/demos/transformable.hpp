@@ -3,6 +3,8 @@
 // transformable object that is an object that can be moved
 // by multiplying a model matrix
 #include <external.hpp>
+#include <vivaphysics/eulerangle.hpp>
+#include <vivaphysics/onb.hpp>
 #include <vivaphysics/quaternion.hpp>
 #include <vivaphysics/vec3.hpp>
 
@@ -32,27 +34,38 @@ struct Translatable {
   Translatable() : trans_check(false) {}
   Translatable(const vivaphysics::v3 &p)
       : position(p), trans_check(true) {}
-  void move(MOVE_DIRECTION md, real dtime) {
+  void move(MOVE_DIRECTION md, real dtime,
+            const onb &basis) {
     switch (md) {
     case MOVE_DIRECTION::LEFT: {
-      position.x -= dtime;
+      position -= basis.u() * dtime;
     }
     case MOVE_DIRECTION::RIGHT: {
-      position.x += dtime;
+      position += basis.u() * dtime;
     }
     case MOVE_DIRECTION::DOWN: {
-      position.y -= dtime;
+      position -= basis.v() * dtime;
     }
     case MOVE_DIRECTION::UP: {
-      position.y += dtime;
+      position += basis.v() * dtime;
     }
     case MOVE_DIRECTION::BACKWARD: {
-      position.z -= dtime;
+      position -= basis.w() * dtime;
     }
-    case MOVE_DIRECTION::BACKWARD: {
-      position.z += dtime;
+    case MOVE_DIRECTION::FORWARD: {
+      position += basis.w() * dtime;
     }
     }
+  }
+  void move(MOVE_DIRECTION md, real dtime) {
+    onb basis;
+    basis.set_w(v3(0, 0, 1));
+    basis.set_v(v3(0, 1, 0));
+    basis.set_u(v3(1, 0, 0));
+    move(md, dtime, basis);
+  }
+  void set_position(const vivaphysics::v3 &p) {
+    position = p;
   }
   glm::mat4 translate(const glm::mat4 &transMat) const {
     if (trans_check) {
@@ -115,19 +128,66 @@ struct Rotatable {
                (roll_cos * pitch_sin * yaw_sin);
     return Rotatable(q_r, q_i, q_j, q_k);
   }
-  glm::vec3 rotate(const glm::vec3 &pos) {
+
+  static Rotatable
+  fromEulerAngles(const vivaphysics::euler_angles &angles) {
     //
-    if (rot_check) {
-      auto axis_normal = quat.vector().normalized();
-      auto angle =
-          static_cast<real>(2 * std::acos(quat.scalar()));
-      auto rot =
-          glm::rotate(pos, angle, axis_normal.to_glm());
-      return rot;
+    return fromEulerAngles(angles.yaw(), angles.pitch(),
+                           angles.roll());
+  }
+  vivaphysics::euler_angles to_euler() const {
+    auto qri = 2 * (quat.scalar() * quat.x() +
+                    quat.y() * quat.z());
+    auto qcos =
+        1 - 2 * (quat.x() * quat.x() + quat.y() * quat.y());
+    // compute roll (x-axis rotation) value
+    auto roll = std::atan2(qri, qcos);
+
+    // compute pitch (y axis rotation) value
+    auto sinp = 2 * (quat.scalar() * quat.y() -
+                     quat.z() * quat.x());
+    real pitch;
+    if (std::abs(sinp) >= 1) {
+      pitch = std::copysign(M_PI / 2, sinp);
     } else {
-      throw std::runtime_error(
-          "rotation values are not initialized");
+      pitch = std::asin(sinp);
     }
+    // compute yaw (z axis rotation) value
+    auto sin_yaw = 2 * (quat.scalar() * quat.z() +
+                        quat.x() * quat.y());
+    auto cos_yaw =
+        1 - 2 * (quat.y() * quat.y() + quat.z() * quat.z());
+    auto yaw = std::atan2(sin_yaw, cos_yaw);
+    vivaphysics::euler_angles angles;
+    angles.set_yaw(yaw);
+    angles.set_roll(roll);
+    angles.set_pitch(pitch);
+    return angles;
+  }
+  void set_euler(vivaphysics::real v,
+                 vivaphysics::EULER_ANGLE a) {
+    auto angles = to_euler();
+    switch (a) {
+    case vivaphysics::EULER_ANGLE::YAW: {
+      angles.set_yaw(v);
+    }
+    case vivaphysics::EULER_ANGLE::ROLL: {
+      angles.set_roll(v);
+    }
+    case vivaphysics::EULER_ANGLE::PITCH: {
+      angles.set_pitch(v);
+    }
+    }
+    *this = Rotatable::fromEulerAngles(angles);
+  }
+  void set_yaw(vivaphysics::real nyaw) {
+    set_euler(nyaw, vivaphysics::EULER_ANGLE::YAW);
+  }
+  void set_pitch(vivaphysics::real np) {
+    set_euler(np, vivaphysics::EULER_ANGLE::PITCH);
+  }
+  void set_roll(vivaphysics::real nr) {
+    set_euler(nr, vivaphysics::EULER_ANGLE::ROLL);
   }
   glm::mat4 rotate(const glm::mat4 &model) const {
     //
@@ -160,35 +220,44 @@ struct Scalable {
     }
   }
 };
-struct Transformable : Translatable, Rotatable, Scalable {
+struct Transformable {
   Scalable sc;
   Rotatable rot;
   Translatable trans;
   Transformable() {}
+  Transformable(const Translatable &t, const Rotatable &r,
+                const Scalable &s)
+      : sc(s), rot(r), trans(t) {}
+  Transformable(const Translatable &t, const Rotatable &r)
+      : rot(r), trans(t) {}
+  Transformable(const Translatable &t) : trans(t) {}
+
   Transformable(const vivaphysics::v3 &pos) : trans(pos) {}
   Transformable(const vivaphysics::v3 &axis,
                 vivaphysics::real angle)
       : rot(axis, angle) {}
   Transformable(const vivaphysics::v3 &pos,
                 const vivaphysics::v3 &s)
-      : trans(pos), sc(s) {}
+      : sc(s), trans(pos) {}
   Transformable(const vivaphysics::v3 &pos,
                 const vivaphysics::v3 &rot_axis,
                 vivaphysics::real angle,
                 const vivaphysics::v3 &s)
-      : trans(pos), rot(rot_axis, angle), sc(s) {}
+      : sc(s), rot(rot_axis, angle), trans(pos) {}
+  void set_rotatable(const Rotatable &rot_) { rot = rot_; }
+  void set_scalable(const Scalable &s_) { sc = s_; }
   /**
    Obtain model matrix of the transformable object*/
   glm::mat4 model() {
     auto m = glm::mat4(1.0f);
     if (trans.trans_check) {
-      m = translate(m);
+      m = trans.translate(m);
     }
     if (rot.rot_check) {
-      m = rotate(m);
+      m = rot.rotate(m);
     }
     if (sc.scale_check) {
-      m = scale(m);
+      m = sc.scale(m);
     }
     return m;
   }

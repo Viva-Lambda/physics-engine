@@ -1,14 +1,11 @@
 #pragma once
 // camera object
+#include <demos/transformable.hpp>
 #include <external.hpp>
 
+using namespace vivademos;
+
 namespace vivademos {
-enum class Camera_Movement {
-  FORWARD,
-  BACKWARD,
-  LEFT,
-  RIGHT
-};
 
 struct Ray {
   glm::vec3 origin;
@@ -30,14 +27,12 @@ const float ZOOM = 45.0f;
 // Abstract camera class
 class Camera {
 public:
-  glm::vec3 pos;
-  glm::vec3 front;
-  glm::vec3 up;
-  glm::vec3 right;
-  glm::vec3 worldUp;
+  // TODO refactor components into a hash table
+  Transformable transform;
+
+  vivaphysics::onb basis;
+  vivaphysics::v3 worldUp;
   // euler angles
-  float yaw;
-  float pitch;
 
   // camera options
   float movementSpeed;
@@ -58,9 +53,9 @@ public:
          glm::vec3 Front = glm::vec3(0.0f, 0.0f, -1.0f),
          float Speed = SPEED, float Sens = SENSITIVITY,
          float Zoom = ZOOM);
-  void processKeyboardRotate(Camera_Movement direction,
+  void processKeyboardRotate(ROTATE_DIRECTION direction,
                              float deltaTime);
-  virtual void processKeyboard(Camera_Movement direction,
+  virtual void processKeyboard(MOVE_DIRECTION direction,
                                float deltaTime);
   glm::mat4 getViewMatrix();
   virtual void
@@ -73,12 +68,12 @@ public:
   Segment getSegmentToPosV4Ortho(glm::vec4 posn);
   glm::vec3 getPosToPosV4Perspective(glm::vec4 posn);
   glm::vec3 getPosToPosV4Ortho(glm::vec4 posn);
-  void setYaw(float nyaw) {
-    yaw = nyaw;
+  void setYaw(vivaphysics::real nyaw) {
+    transform.rot.set_yaw(nyaw);
     updateCameraVectors();
   }
-  void setPitch(float npitch) {
-    pitch = npitch;
+  void setPitch(vivaphysics::real npitch) {
+    transform.rot.set_pitch(npitch);
     updateCameraVectors();
   }
   void setZoom(float nzoom) { zoom = nzoom; }
@@ -91,13 +86,27 @@ private:
 Camera::Camera(glm::vec3 Position, glm::vec3 Up, float Yaw,
                float Pitch, float Zoom, glm::vec3 Front,
                float Speed, float Sens) {
+  // create transformable component
+  //
+  // create translatable component
   pos = Position;
+  vivaphysics::v3 pos_v(Position.x, Position.y, Position.z);
+  // set rotatable
+  // set angles
+  euler_angles angles;
+
+  angles.set_yaw(Yaw);
+  angles.set_pitch(Pitch);
+  angles.set_roll(0.0);
+  auto rot_ = Rotatable::fromEulerAngles(angles);
+  Translatable trans(pos_v);
+  // set transformable
+  transform = Transformable(trans, rot_);
+
   worldUp = Up;
-  pitch = Pitch;
-  yaw = Yaw;
   movementSpeed = Speed;
   mouseSensitivity = Sens;
-  front = Front;
+  basis.from_w(Front.x, Front.y, Front.z);
   zoom = Zoom;
   updateCameraVectors();
 }
@@ -107,10 +116,23 @@ Camera::Camera(float posX, float posY, float posZ,
                float upX, float upY, float upZ, float Yaw,
                float Pitch, glm::vec3 Front, float Speed,
                float Sens, float Zoom) {
-  pos = glm::vec3(posX, posY, posZ);
+  // create transformable component
+  // set position
+  vivaphysics::v3 pos_v(posX, posY, posZ);
+
+  // set rotatable
+  // set angles
+  euler_angles angles;
+
+  angles.set_yaw(Yaw);
+  angles.set_pitch(Pitch);
+  angles.set_roll(0.0);
+  auto rot_ = Rotatable::fromEulerAngles(angles);
+  Translatable trans(pos_v);
+  transform = Transformable(trans, rot_);
+
+  // set world up
   worldUp = glm::vec3(upX, upY, upZ);
-  yaw = Yaw;
-  pitch = Pitch;
   movementSpeed = Speed;
   mouseSensitivity = Sens;
   zoom = Zoom;
@@ -118,36 +140,23 @@ Camera::Camera(float posX, float posY, float posZ,
   updateCameraVectors();
 }
 void Camera::updateCameraVectors() {
-  glm::vec3 front_;
+  vivaphysics::EulerAngles angles =
+      transform.rot.to_euler();
+  real yaw = angles.yaw();
+  real pitch = angles.pitch();
   // compute new front
-  front_.x =
-      cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-  front_.y = sin(glm::radians(pitch));
-  front_.z =
-      sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-  front = glm::normalize(front_);
+  vivaphysics::v3 front_;
+  front_.x = cos(yaw) * cos(pitch);
+  front_.y = sin(pitch);
+  front_.z = sin(yaw) * cos(pitch);
 
-  // compute right and up
-  right = glm::normalize(glm::cross(front, worldUp));
-  up = glm::normalize(glm::cross(right, front));
+  //
+  basis.from_w(front_x);
 }
-void Camera::processKeyboard(Camera_Movement direction,
+void Camera::processKeyboard(MOVE_DIRECTION direction,
                              float deltaTime) {
   float velocity = movementSpeed * deltaTime;
-  switch (direction) {
-  case Camera_Movement::FORWARD:
-    pos += front * velocity;
-    break;
-  case Camera_Movement::BACKWARD:
-    pos -= front * velocity;
-    break;
-  case Camera_Movement::RIGHT:
-    pos += right * velocity;
-    break;
-  case Camera_Movement::LEFT:
-    pos -= right * velocity;
-    break;
-  }
+  transform.trans.move(direction, velocity, basis);
 }
 
 glm::mat4 Camera::getViewMatrix() {
