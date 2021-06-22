@@ -3,6 +3,7 @@
 // transformable object that is an object that can be moved
 // by multiplying a model matrix
 #include <external.hpp>
+#include <stdexcept>
 #include <vivaphysics/eulerangle.hpp>
 #include <vivaphysics/onb.hpp>
 #include <vivaphysics/quaternion.hpp>
@@ -188,6 +189,30 @@ struct Rotatable {
   }
   void set_roll(vivaphysics::real nr) {
     set_euler(nr, vivaphysics::EULER_ANGLE::ROLL);
+  }
+  void rotate_by_euler(ROTATE_DIRECTION direction,
+                       vivaphysics::real deltaTime,
+                       vivaphysics::real speed) {
+    deltaTime *= speed;
+    euler_angles angles = to_euler();
+    vivaphysics::real yaw = angles.yaw();
+    vivaphysics::real pitch = angles.pitch();
+    if (direction == ROTATE_DIRECTION::FORWARD) {
+      pitch += deltaTime;
+    } else if (direction == ROTATE_DIRECTION::BACKWARD) {
+      pitch -= deltaTime;
+    } else if (direction == ROTATE_DIRECTION::LEFT) {
+      yaw -= deltaTime;
+    } else if (direction == ROTATE_DIRECTION::RIGHT) {
+      yaw += deltaTime;
+    } else {
+      throw std::runtime_error(
+          "rotate by euler accepts only forward,backward, "
+          "left, right rotation directions");
+    }
+    angles.set_yaw(yaw);
+    angles.set_pitch(pitch);
+    *this = Rotatable::fromEulerAngles(angles);
   }
   glm::mat4 rotate(const glm::mat4 &model) const {
     //

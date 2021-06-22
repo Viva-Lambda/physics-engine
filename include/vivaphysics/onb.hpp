@@ -16,6 +16,9 @@ struct onb {
   v3 u() const { return axis[0]; }
   v3 v() const { return axis[1]; }
   v3 w() const { return axis[2]; }
+  v3 front() const { return w(); }
+  v3 up() const { return v(); }
+  v3 right() const { return u(); }
   void set_w(const v3 &w_) { axis[2] = w_; }
   void set_v(const v3 &v_) { axis[1] = v_; }
   void set_u(const v3 &u_) { axis[0] = u_; }
@@ -55,8 +58,8 @@ struct onb {
     front.x = cos(yaw) * cos(pitch);
     front.y = sin(pitch);
     front.z = sin(yaw) * cos(pitch);
-    from_w(front_);
+    from_w(front);
   }
-  void from_quaternion(const q4 &quat) {}
+  // void from_quaternion(const q4 &quat) {}
 };
 };

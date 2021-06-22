@@ -1,5 +1,6 @@
 #pragma once
 // camera object
+#include "vivaphysics/eulerangle.hpp"
 #include <demos/transformable.hpp>
 #include <external.hpp>
 
@@ -62,12 +63,6 @@ public:
   processMouseMovement(float xoffset, float yoffset,
                        GLboolean pitchBound = true);
   void processMouseScroll(float yoffset);
-  Ray getRayToPosV4Perspective(glm::vec4 posn);
-  Ray getRayToPosV4Ortho(glm::vec4 posn);
-  Segment getSegmentToPosV4Perspective(glm::vec4 posn);
-  Segment getSegmentToPosV4Ortho(glm::vec4 posn);
-  glm::vec3 getPosToPosV4Perspective(glm::vec4 posn);
-  glm::vec3 getPosToPosV4Ortho(glm::vec4 posn);
   void setYaw(vivaphysics::real nyaw) {
     transform.rot.set_yaw(nyaw);
     updateCameraVectors();
@@ -89,7 +84,6 @@ Camera::Camera(glm::vec3 Position, glm::vec3 Up, float Yaw,
   // create transformable component
   //
   // create translatable component
-  pos = Position;
   vivaphysics::v3 pos_v(Position.x, Position.y, Position.z);
   // set rotatable
   // set angles
@@ -103,7 +97,7 @@ Camera::Camera(glm::vec3 Position, glm::vec3 Up, float Yaw,
   // set transformable
   transform = Transformable(trans, rot_);
 
-  worldUp = Up;
+  worldUp = vivaphysics::v3(Up);
   movementSpeed = Speed;
   mouseSensitivity = Sens;
   basis.from_w(Front.x, Front.y, Front.z);
@@ -132,26 +126,17 @@ Camera::Camera(float posX, float posY, float posZ,
   transform = Transformable(trans, rot_);
 
   // set world up
-  worldUp = glm::vec3(upX, upY, upZ);
+  worldUp = vivaphysics::v3(upX, upY, upZ);
   movementSpeed = Speed;
   mouseSensitivity = Sens;
   zoom = Zoom;
-  front = Front;
+  basis.from_w_up(vivaphysics::v3(Front), worldUp);
   updateCameraVectors();
 }
 void Camera::updateCameraVectors() {
-  vivaphysics::EulerAngles angles =
+  vivaphysics::euler_angles angles =
       transform.rot.to_euler();
-  real yaw = angles.yaw();
-  real pitch = angles.pitch();
-  // compute new front
-  vivaphysics::v3 front_;
-  front_.x = cos(yaw) * cos(pitch);
-  front_.y = sin(pitch);
-  front_.z = sin(yaw) * cos(pitch);
-
-  //
-  basis.from_w(front_x);
+  basis.from_euler(angles);
 }
 void Camera::processKeyboard(MOVE_DIRECTION direction,
                              float deltaTime) {
@@ -160,18 +145,20 @@ void Camera::processKeyboard(MOVE_DIRECTION direction,
 }
 
 glm::mat4 Camera::getViewMatrix() {
-  glm::vec3 target = pos + front;
-  glm::vec3 upvec = up;
-  glm::vec3 cameraDirection = glm::normalize(pos - target);
+  glm::vec3 target =
+      (transform.trans.position + basis.front()).to_glm();
+  glm::vec3 upvec = basis.up().to_glm();
+  glm::vec3 cameraDirection = glm::normalize(
+      transform.trans.position.to_glm() - target);
   glm::vec3 right =
       glm::normalize(glm::cross(upvec, cameraDirection));
-  glm::vec3 realUp =
-      glm::normalize(glm::cross(cameraDirection, right));
+  glm::vec3 realUp = glm::normalize(
+      glm::cross(cameraDirection, basis.right().to_glm()));
   //
   glm::mat4 trans(1.0f);
-  trans[3][0] = -pos.x;
-  trans[3][1] = -pos.y;
-  trans[3][2] = -pos.z;
+  trans[3][0] = -transform.trans.position.x;
+  trans[3][1] = -transform.trans.position.y;
+  trans[3][2] = -transform.trans.position.z;
 
   //
   glm::mat4 rotation(1.0f);
@@ -192,16 +179,20 @@ void Camera::processMouseMovement(float xoffset,
                                   GLboolean pitchBound) {
   xoffset *= mouseSensitivity;
   yoffset *= mouseSensitivity;
+  vivaphysics::euler_angles angles =
+      transform.rot.to_euler();
+  vivaphysics::real yaw = angles.yaw();
+  vivaphysics::real pitch = angles.pitch();
 
   yaw += xoffset;
   pitch += yoffset;
 
   if (pitchBound) {
     if (pitch > 89.0f) {
-      pitch = 89.0f;
+      angles.set_pitch(89.0f);
     }
     if (pitch < -89.0f) {
-      pitch = -89.0f;
+      angles.set_pitch(-89.0f);
     }
   }
 
@@ -209,23 +200,9 @@ void Camera::processMouseMovement(float xoffset,
 }
 
 void Camera::processKeyboardRotate(
-    Camera_Movement direction, float deltaTime) {
-
-  deltaTime *= movementSpeed;
-  switch (direction) {
-  case Camera_Movement::FORWARD:
-    pitch += deltaTime;
-    break;
-  case Camera_Movement::BACKWARD:
-    pitch -= deltaTime;
-    break;
-  case Camera_Movement::RIGHT:
-    yaw += deltaTime;
-    break;
-  case Camera_Movement::LEFT:
-    yaw -= deltaTime;
-    break;
-  }
+    ROTATE_DIRECTION direction, float deltaTime) {
+  transform.rot.rotate_by_euler(direction, deltaTime,
+                                movementSpeed);
   updateCameraVectors();
 }
 
@@ -240,53 +217,5 @@ void Camera::processMouseScroll(float yoffset) {
   if (zoom >= 45.0f) {
     zoom = 45.0f;
   }
-}
-glm::vec3 Camera::getPosToPosV4Perspective(glm::vec4 poss) {
-  glm::vec3 posPers = glm::vec3(
-      poss.x / poss.w, poss.y / poss.w, poss.z / poss.w);
-  return posPers - pos;
-}
-glm::vec3 Camera::getPosToPosV4Ortho(glm::vec4 poss) {
-  glm::vec3 posPers = glm::vec3(poss.x, poss.y, poss.z);
-  return posPers - pos;
-}
-Segment
-Camera::getSegmentToPosV4Perspective(glm::vec4 pos) {
-  // do perspective division to starting point
-  // then subtract from the start to have an end
-  glm::vec3 segment = getPosToPosV4Perspective(pos);
-  Segment s;
-  s.origin = segment;
-  s.size = glm::length(segment);
-  s.direction = glm::normalize(segment);
-  return s;
-}
-Segment Camera::getSegmentToPosV4Ortho(glm::vec4 pos) {
-  // do perspective division to starting point
-  // then subtract from the start to have an end
-  glm::vec3 segment = getPosToPosV4Ortho(pos);
-  Segment s;
-  s.origin = segment;
-  s.direction = glm::normalize(segment);
-  s.size = glm::length(segment);
-  return s;
-}
-Ray Camera::getRayToPosV4Perspective(glm::vec4 pos) {
-  // do perspective division to starting point
-  // then subtract from the start to have an end
-  Segment s = this->getSegmentToPosV4Perspective(pos);
-  Ray r;
-  r.origin = s.origin;
-  r.direction = s.direction;
-  return r;
-}
-Ray Camera::getRayToPosV4Ortho(glm::vec4 pos) {
-  // do perspective division to starting point
-  // then subtract from the start to have an end
-  Segment s = getSegmentToPosV4Ortho(pos);
-  Ray r;
-  r.origin = s.origin;
-  r.direction = s.direction;
-  return r;
 }
 };
