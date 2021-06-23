@@ -1,5 +1,6 @@
 #pragma once
 // show a mesh on window
+#include "demos/transformable.hpp"
 #include <demos/app.hpp>
 #include <demos/camera.hpp>
 #include <demos/light.hpp>
@@ -239,7 +240,7 @@ public:
         glm::perspective(glm::radians(camera.zoom),
                          (float)width / (float)height,
                          near_plane_dist, far_plane_dist);
-    viewMat = camera.getViewMatrix();
+    viewMat = camera.get_view_matrix();
 
     glm::mat4 lightProj;
     glm::mat4 lightView;
@@ -441,19 +442,19 @@ public:
     //
     float deltaTime = 0.01;
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-      camera.processKeyboard(Camera_Movement::FORWARD,
+      camera.processKeyboard(MOVE_DIRECTION::FORWARD,
                              deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-      camera.processKeyboard(Camera_Movement::LEFT,
+      camera.processKeyboard(MOVE_DIRECTION::LEFT,
                              deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-      camera.processKeyboard(Camera_Movement::BACKWARD,
+      camera.processKeyboard(MOVE_DIRECTION::BACKWARD,
                              deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-      camera.processKeyboard(Camera_Movement::RIGHT,
+      camera.processKeyboard(MOVE_DIRECTION::RIGHT,
                              deltaTime);
     }
     auto control_left =
@@ -461,7 +462,7 @@ public:
          GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS);
     if (control_left) {
-      camera.processKeyboardRotate(Camera_Movement::LEFT,
+      camera.processKeyboardRotate(ROTATE_DIRECTION::LEFT,
                                    0.7f);
     }
     auto control_right =
@@ -470,7 +471,7 @@ public:
         (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS);
 
     if (control_right) {
-      camera.processKeyboardRotate(Camera_Movement::RIGHT,
+      camera.processKeyboardRotate(ROTATE_DIRECTION::RIGHT,
                                    0.7f);
     }
 
@@ -480,8 +481,8 @@ public:
         (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS);
 
     if (control_up) {
-      camera.processKeyboardRotate(Camera_Movement::FORWARD,
-                                   0.7f);
+      camera.processKeyboardRotate(
+          ROTATE_DIRECTION::FORWARD, 0.7f);
     }
 
     auto control_down =
@@ -491,7 +492,7 @@ public:
 
     if (control_down) {
       camera.processKeyboardRotate(
-          Camera_Movement::BACKWARD, 0.7f);
+          ROTATE_DIRECTION::BACKWARD, 0.7f);
     }
   }
   /** move light object */
@@ -643,8 +644,6 @@ public:
     print_other_keys();
   }
 
-  void render_text(int x, int y, std::string txt,
-                   void *font = nullptr) override {}
   virtual void print_other_keys() {}
   virtual bool clean_up_graphics() {
     glfwTerminate();

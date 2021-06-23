@@ -203,8 +203,5 @@ public:
   }
   /** process certain keys given in key map */
   virtual void process_input() { key(GLFW_KEY_ESCAPE); }
-  virtual void mouse_drag(int x, int y) {}
-  virtual void render_text(int x, int y, std::string txt,
-                           void *font = nullptr) {}
 };
 };

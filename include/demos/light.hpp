@@ -4,23 +4,16 @@
 #include <external.hpp>
 
 namespace vivademos {
-using vec3 = glm::vec3;
+using vec3 = vivaphysics::v3;
 using point3 = vec3;
 using color = vec3;
 
 // default values for the camera
-const float LYAW = -90.0f;
-const float LPITCH = 0.0f;
-const float LSPEED = 2.5f;
+const vivaphysics::real LYAW = -90.0f;
+const vivaphysics::real LPITCH = 0.0f;
+const vivaphysics::real LSPEED = 2.5f;
 
 //
-
-enum LightMovement {
-  L_FORWARD,
-  L_BACKWARD,
-  L_LEFT,
-  L_RIGHT
-};
 
 class Light {
 public:
@@ -35,105 +28,91 @@ public:
 
 class DirectionalLight : public Light {
 public:
-  vec3 front;
-  vec3 up;
-  vec3 right;
-  vec3 worldUp;
-  float yaw, pitch;
+  // TODO refactor components into a hash table
+  Rotatable rot;
+
+  //
+  vivaphysics::onb basis;
+  vivaphysics::v3 worldUp;
+
   DirectionalLight(color lightColor, vec3 wup,
-                   float y = LYAW, float p = LPITCH)
-      : Light(lightColor), worldUp(wup), yaw(y), pitch(p) {
+                   vivaphysics::real yaw = LYAW,
+                   vivaphysics::real pitch = LPITCH)
+      : Light(lightColor), worldUp(wup) {
+    euler_angles angles;
+    angles.set_yaw(yaw);
+    angles.set_pitch(pitch);
+    angles.set_roll(0.0);
+    rot = Rotatable::fromEulerAngles(angles);
+    setup_basis();
+
     updateDirection();
   }
-  void setYaw(float val) {
-    yaw = val;
+  void setYaw(vivaphysics::real nyaw) {
+    rot.set_yaw(nyaw);
     updateDirection();
   }
-  void setPitch(float val) {
-    pitch = val;
+  void setPitch(vivaphysics::real val) {
+    rot.set_pitch(val);
     updateDirection();
+  }
+  void setup_basis() {
+    vivaphysics::euler_angles angles = rot.to_euler();
+    vivaphysics::real yaw = angles.yaw();
+    vivaphysics::real pitch = angles.pitch();
+    vivaphysics::v3 front;
+    front.x =
+        cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z =
+        sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    basis.from_w(front);
   }
 
 protected:
   void updateDirection() {
     //
-    front.x = cos(glm::radians(this->yaw)) *
-              cos(glm::radians(this->pitch));
-    front.y = sin(glm::radians(this->pitch));
-    front.z = sin(glm::radians(this->yaw)) *
-              cos(glm::radians(this->pitch));
-    front = glm::normalize(front);
-    right = glm::normalize(glm::cross(front, worldUp));
-    up = glm::normalize(glm::cross(right, front));
+    vivaphysics::euler_angles angles = rot.to_euler();
+    basis.from_euler(angles, worldUp);
   }
 };
 class PointLight : public Light {
 public:
-  Transformable transform;
+  Translatable trans;
   point3 position;
   PointLight(const color &lightColor, const point3 &pos)
-      : Light(lightColor), transform(pos) {}
+      : Light(lightColor), trans(pos) {}
 };
 
 class SpotLight : public DirectionalLight,
                   public PointLight {
 public:
-  float cutOff;
-  float outerCutoff;
-  float movementSpeed;
+  vivaphysics::real cutOff;
+  vivaphysics::real outerCutoff;
+  vivaphysics::real movementSpeed;
+  Transformable transform;
+  //
   SpotLight(color lightColor, point3 pos, vec3 wup,
-            float y = LYAW, float p = LPITCH,
-            float cutOffAngleDegree = 0.91,
-            float outerCut = 0.82, float mspeed = LSPEED)
+            vivaphysics::real y = LYAW,
+            vivaphysics::real p = LPITCH,
+            vivaphysics::real cutOffAngleDegree = 0.91,
+            vivaphysics::real outerCut = 0.82,
+            vivaphysics::real mspeed = LSPEED)
 
       : DirectionalLight(lightColor, wup, y, p),
         PointLight(lightColor, pos),
         cutOff(glm::radians(cutOffAngleDegree)),
-        outerCutoff(outerCut), movementSpeed(mspeed) {}
-  glm::mat4 getViewMatrix() {
-    vec3 target = position - front;
-    vec3 lightDir = glm::normalize(position - target);
-    vec3 rightDir =
-        glm::normalize(glm::cross(up, lightDir));
-    glm::vec3 realUp =
-        glm::normalize(glm::cross(lightDir, rightDir));
-    //
-    glm::mat4 trans(1.0f);
-    trans[3][0] = -position.x;
-    trans[3][1] = -position.y;
-    trans[3][2] = -position.z;
-
-    //
-    glm::mat4 rotation(1.0f);
-    rotation[0][0] = rightDir.x;
-    rotation[1][0] = rightDir.y;
-    rotation[2][0] = rightDir.z;
-    rotation[0][1] = realUp.x;
-    rotation[1][1] = realUp.y;
-    rotation[2][1] = realUp.z;
-    rotation[0][2] = lightDir.x;
-    rotation[1][2] = lightDir.y;
-    rotation[2][2] = lightDir.z;
-    return rotation * trans;
+        outerCutoff(outerCut), movementSpeed(mspeed) {
+    transform.set_rotatable(rot);
+    transform.set_translatable(trans);
   }
-  void processKeyBoardRotate(LightMovement direction,
-                             float deltaTime) {
-
-    deltaTime *= movementSpeed;
-    switch (direction) {
-    case L_FORWARD:
-      pitch += deltaTime;
-      break;
-    case L_BACKWARD:
-      pitch -= deltaTime;
-      break;
-    case L_RIGHT:
-      yaw += deltaTime;
-      break;
-    case L_LEFT:
-      yaw -= deltaTime;
-      break;
-    }
+  glm::mat4 get_view_matrix() const {
+    return transform.get_view_matrix(basis);
+  }
+  void processKeyBoardRotate(ROTATE_DIRECTION direction,
+                             vivaphysics::real deltaTime) {
+    transform.rot.rotate_by_euler(direction, deltaTime,
+                                  movementSpeed);
     updateDirection();
   }
 };

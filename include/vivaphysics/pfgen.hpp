@@ -237,8 +237,7 @@ struct ParticleForceGeneratorWrapper {
 template <> struct ParticleForceGenerator<ParticleGravity> {
 
   void update_force(const ParticleGravity &generator,
-                    std::shared_ptr<Particle> p,
-                    real duration) {
+                    std::shared_ptr<Particle> p) {
     // check if object is immovable
     if (!p->has_finite_mass())
       return;
@@ -250,8 +249,7 @@ template <> struct ParticleForceGenerator<ParticleGravity> {
 
 template <> struct ParticleForceGenerator<ParticleDrag> {
   void update_force(const ParticleDrag &generator,
-                    std::shared_ptr<Particle> p,
-                    real duration) {
+                    std::shared_ptr<Particle> p) {
     // check if object is immovable
     v3 force;
     p->get_velocity(force);
@@ -273,8 +271,7 @@ template <> struct ParticleForceGenerator<ParticleDrag> {
 template <>
 struct ParticleForceGenerator<ParticleAnchoredSpring> {
   void update_force(const ParticleAnchoredSpring &generator,
-                    std::shared_ptr<Particle> p,
-                    real duration) {
+                    std::shared_ptr<Particle> p) {
     // check if object is immovable
     v3 force;
     p->get_position(force);
@@ -297,8 +294,7 @@ struct ParticleForceGenerator<ParticleAnchoredSpring> {
 template <>
 struct ParticleForceGenerator<ParticleAnchoredBungee> {
   void update_force(const ParticleAnchoredBungee &generator,
-                    std::shared_ptr<Particle> p,
-                    real duration) {
+                    std::shared_ptr<Particle> p) {
     // check if object is immovable
     v3 force;
     p->get_position(force);
@@ -361,8 +357,7 @@ struct ParticleForceGenerator<ParticleFakeSpring> {
 };
 template <> struct ParticleForceGenerator<ParticleSpring> {
   void update_force(const ParticleSpring &generator,
-                    std::shared_ptr<Particle> p,
-                    real duration) {
+                    std::shared_ptr<Particle> p) {
     v3 force;
     p->get_position(force);
     force -= generator.end_p.get_position();
@@ -382,8 +377,7 @@ template <> struct ParticleForceGenerator<ParticleSpring> {
 
 template <> struct ParticleForceGenerator<ParticleBungee> {
   void update_force(const ParticleBungee &generator,
-                    std::shared_ptr<Particle> p,
-                    real duration) {
+                    std::shared_ptr<Particle> p) {
     v3 force;
     p->get_position(force);
     force -= generator.end_p.get_position();
@@ -405,8 +399,7 @@ template <> struct ParticleForceGenerator<ParticleBungee> {
 template <>
 struct ParticleForceGenerator<ParticleBuoyancy> {
   void update_force(const ParticleBuoyancy &generator,
-                    std::shared_ptr<Particle> p,
-                    real duration) {
+                    std::shared_ptr<Particle> p) {
     real depth = p->get_position().y;
 
     // are we in admissible depth
@@ -438,21 +431,19 @@ struct ParticleForceGenerator<
     switch (generator.gtype) {
     case ParticleForceGeneratorType::GRAVITY:
       ParticleForceGenerator<ParticleGravity> gen;
-      gen.update_force(generator.to_gravity(), p, duration);
+      gen.update_force(generator.to_gravity(), p);
       break;
     case ParticleForceGeneratorType::DRAG:
       ParticleForceGenerator<ParticleDrag> gen2;
-      gen2.update_force(generator.to_drag(), p, duration);
+      gen2.update_force(generator.to_drag(), p);
       break;
     case ParticleForceGeneratorType::ANCHORED_SPRING:
       ParticleForceGenerator<ParticleAnchoredSpring> gen3;
-      gen3.update_force(generator.to_anchor_spring(), p,
-                        duration);
+      gen3.update_force(generator.to_anchor_spring(), p);
       break;
     case ParticleForceGeneratorType::ANCHORED_BUNGEE:
       ParticleForceGenerator<ParticleAnchoredBungee> gen4;
-      gen4.update_force(generator.to_anchor_bungee(), p,
-                        duration);
+      gen4.update_force(generator.to_anchor_bungee(), p);
       break;
     case ParticleForceGeneratorType::FAKE_SPRING:
       ParticleForceGenerator<ParticleFakeSpring> gen5;
@@ -461,16 +452,15 @@ struct ParticleForceGenerator<
       break;
     case ParticleForceGeneratorType::SPRING:
       ParticleForceGenerator<ParticleSpring> gen6;
-      gen6.update_force(generator.to_spring(), p, duration);
+      gen6.update_force(generator.to_spring(), p);
       break;
     case ParticleForceGeneratorType::BUNGEE:
       ParticleForceGenerator<ParticleBungee> gen7;
-      gen7.update_force(generator.to_bungee(), p, duration);
+      gen7.update_force(generator.to_bungee(), p);
       break;
     case ParticleForceGeneratorType::BUOYANCY:
       ParticleForceGenerator<ParticleBuoyancy> gen8;
-      gen8.update_force(generator.to_buoyancy(), p,
-                        duration);
+      gen8.update_force(generator.to_buoyancy(), p);
       break;
     }
   }

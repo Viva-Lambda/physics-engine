@@ -1,6 +1,5 @@
 #pragma once
 // camera object
-#include "vivaphysics/eulerangle.hpp"
 #include <demos/transformable.hpp>
 #include <external.hpp>
 
@@ -58,7 +57,9 @@ public:
                              float deltaTime);
   virtual void processKeyboard(MOVE_DIRECTION direction,
                                float deltaTime);
-  glm::mat4 getViewMatrix();
+  glm::mat4 get_view_matrix() {
+    return transform.get_view_matrix(basis);
+  }
   virtual void
   processMouseMovement(float xoffset, float yoffset,
                        GLboolean pitchBound = true);
@@ -136,42 +137,12 @@ Camera::Camera(float posX, float posY, float posZ,
 void Camera::updateCameraVectors() {
   vivaphysics::euler_angles angles =
       transform.rot.to_euler();
-  basis.from_euler(angles);
+  basis.from_euler(angles, worldUp);
 }
 void Camera::processKeyboard(MOVE_DIRECTION direction,
                              float deltaTime) {
   float velocity = movementSpeed * deltaTime;
   transform.trans.move(direction, velocity, basis);
-}
-
-glm::mat4 Camera::getViewMatrix() {
-  glm::vec3 target =
-      (transform.trans.position + basis.front()).to_glm();
-  glm::vec3 upvec = basis.up().to_glm();
-  glm::vec3 cameraDirection = glm::normalize(
-      transform.trans.position.to_glm() - target);
-  glm::vec3 right =
-      glm::normalize(glm::cross(upvec, cameraDirection));
-  glm::vec3 realUp = glm::normalize(
-      glm::cross(cameraDirection, basis.right().to_glm()));
-  //
-  glm::mat4 trans(1.0f);
-  trans[3][0] = -transform.trans.position.x;
-  trans[3][1] = -transform.trans.position.y;
-  trans[3][2] = -transform.trans.position.z;
-
-  //
-  glm::mat4 rotation(1.0f);
-  rotation[0][0] = right.x;
-  rotation[1][0] = right.y;
-  rotation[2][0] = right.z;
-  rotation[0][1] = realUp.x;
-  rotation[1][1] = realUp.y;
-  rotation[2][1] = realUp.z;
-  rotation[0][2] = cameraDirection.x;
-  rotation[1][2] = cameraDirection.y;
-  rotation[2][2] = cameraDirection.z;
-  return rotation * trans;
 }
 
 void Camera::processMouseMovement(float xoffset,

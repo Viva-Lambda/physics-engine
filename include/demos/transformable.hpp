@@ -3,7 +3,6 @@
 // transformable object that is an object that can be moved
 // by multiplying a model matrix
 #include <external.hpp>
-#include <stdexcept>
 #include <vivaphysics/eulerangle.hpp>
 #include <vivaphysics/onb.hpp>
 #include <vivaphysics/quaternion.hpp>
@@ -270,7 +269,39 @@ struct Transformable {
                 const vivaphysics::v3 &s)
       : sc(s), rot(rot_axis, angle), trans(pos) {}
   void set_rotatable(const Rotatable &rot_) { rot = rot_; }
+  glm::mat4 get_view_matrix(const onb &basis) const {
+    //
+    glm::vec3 pos = trans.position.to_glm();
+    glm::vec3 target = pos + basis.front().to_glm();
+    glm::vec3 upvec = basis.up().to_glm();
+    glm::vec3 look_direction = glm::normalize(pos - target);
+    glm::vec3 right =
+        glm::normalize(glm::cross(upvec, look_direction));
+    glm::vec3 realUp = glm::normalize(
+        glm::cross(look_direction, basis.right().to_glm()));
+    //
+    glm::mat4 trans(1.0f);
+    trans[3][0] = -pos.x;
+    trans[3][1] = -pos.y;
+    trans[3][2] = -pos.z;
+
+    //
+    glm::mat4 rotation(1.0f);
+    rotation[0][0] = right.x;
+    rotation[1][0] = right.y;
+    rotation[2][0] = right.z;
+    rotation[0][1] = realUp.x;
+    rotation[1][1] = realUp.y;
+    rotation[2][1] = realUp.z;
+    rotation[0][2] = look_direction.x;
+    rotation[1][2] = look_direction.y;
+    rotation[2][2] = look_direction.z;
+    return rotation * trans;
+  }
   void set_scalable(const Scalable &s_) { sc = s_; }
+  void set_translatable(const Translatable &t_) {
+    trans = t_;
+  }
   /**
    Obtain model matrix of the transformable object*/
   glm::mat4 model() {

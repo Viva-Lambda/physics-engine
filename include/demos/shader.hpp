@@ -3,6 +3,8 @@
 
 #include <external.hpp>
 
+namespace vivademos {
+
 void checkShaderCompilation(GLuint shader,
                             const char *shaderType,
                             const char *shaderFilePath) {
@@ -162,7 +164,7 @@ public:
 GLuint Shader::loadShader(const GLchar *shaderFilePath,
                           const GLchar *shaderType) {
   // load shader file from system
-  GLuint shader;
+  GLuint shader = 0;
   std::string stype(shaderType);
   if (stype == "FRAGMENT") {
     shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -173,8 +175,9 @@ GLuint Shader::loadShader(const GLchar *shaderFilePath,
   } else if (stype == "GEOMETRY") {
     shader = glCreateShader(GL_GEOMETRY_SHADER);
   } else {
-    std::cout << "Unknown shader type:\n"
-              << shaderType << std::endl;
+    std::string msg =
+        "Unknown shader type:\n" + std::string(shaderType);
+    throw std::runtime_error(msg);
   }
   std::ifstream shdrFileStream;
   shdrFileStream.exceptions(std::ifstream::failbit |
@@ -261,14 +264,14 @@ Shader::Shader(const GLchar *vertexSource,
         "if passed source to args, check must be true");
   }
   this->programId = glCreateProgram();
-  GLuint vshader;
+  GLuint vshader = 0;
   glShaderSource(vshader, 1, &vertexSource, NULL);
   glCompileShader(vshader);
 
   // a sanity check for unsuccessful compilations
   checkShaderCompilation(vshader, "VERTEX", "from source");
   glAttachShader(this->programId, vshader);
-  GLuint fshader;
+  GLuint fshader = 0;
   glShaderSource(fshader, 1, &fragmentSource, NULL);
   glCompileShader(fshader);
 
@@ -342,3 +345,4 @@ Shader mk_line_shader() {
       "media/demos/glsl/basic_color_light.frag";
   return Shader(vertex_path, fragment_source);
 }
+};

@@ -60,6 +60,17 @@ struct onb {
     front.z = sin(yaw) * cos(pitch);
     from_w(front);
   }
+  void from_euler(const euler_angles &angles,
+                  const v3 &up) {
+    real yaw = angles.yaw();
+    real pitch = angles.pitch();
+    // compute new front
+    vivaphysics::v3 front;
+    front.x = cos(yaw) * cos(pitch);
+    front.y = sin(pitch);
+    front.z = sin(yaw) * cos(pitch);
+    from_w_up(front, up);
+  }
   // void from_quaternion(const q4 &quat) {}
 };
 };

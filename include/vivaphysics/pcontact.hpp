@@ -45,7 +45,7 @@ public:
    * interpenetration*/
   void resolve(real duration) {
     resolve_velocity(duration);
-    resolve_interpenetration(duration);
+    resolve_interpenetration();
   }
 
   real compute_separating_velocity() const {
@@ -124,7 +124,7 @@ public:
   }
 
   /**resolve interpenetration for the contact*/
-  void resolve_interpenetration(real duration) {
+  void resolve_interpenetration() {
     if (penetration <= 0)
       return;
 
@@ -255,8 +255,6 @@ template <class T> struct ParticleContactGenerator {
    */
   unsigned int
   add_contact(T &obj, std::vector<ParticleContact> &contact,
-              unsigned int contact_limit) {
-    return 0;
-  }
+              unsigned int contact_limit) const = 0;
 };
 };

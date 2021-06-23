@@ -89,8 +89,8 @@ struct ParticleContactWrapper {
         type(ParticleContactGeneratorType::ROD_CONSTRAINT) {
   }
   ParticleContactWrapper(const GroundContacts &g)
-      : type(ParticleContactGeneratorType::GROUND),
-        contact_ps(g.particles) {}
+      : contact_ps(g.particles),
+        type(ParticleContactGeneratorType::GROUND) {}
   ParticleCable to_cable() const {
     ParticleCable cable;
     cable.contact_ps = contact_ps;
@@ -131,8 +131,7 @@ template <> struct ParticleContactGenerator<ParticleCable> {
   unsigned int
   add_contact(ParticleCable &cable,
               std::vector<ParticleContact> &contact,
-              unsigned int contact_start,
-              unsigned int contact_end) {
+              unsigned int contact_start) {
     // length of the cable
     real length = cable.current_length();
 
@@ -159,8 +158,7 @@ template <> struct ParticleContactGenerator<ParticleRod> {
   unsigned int
   add_contact(ParticleRod &rod,
               std::vector<ParticleContact> &contact,
-              unsigned int contact_start,
-              unsigned int contact_end) {
+              unsigned int contact_start) {
     // length of the cable
     real cur_length = rod.current_length();
 
@@ -197,8 +195,7 @@ struct ParticleContactGenerator<ParticleCableConstraint> {
   unsigned int
   add_contact(ParticleCableConstraint &cable,
               std::vector<ParticleContact> &contact,
-              unsigned int contact_start,
-              unsigned int contact_end) {
+              unsigned int contact_start) {
     // length of the cable
     real cur_length = cable.current_length();
 
@@ -230,8 +227,7 @@ struct ParticleContactGenerator<ParticleRodConstraint> {
   unsigned int
   add_contact(ParticleRodConstraint &rod,
               std::vector<ParticleContact> &contact,
-              unsigned int contact_start,
-              unsigned int contact_end) {
+              unsigned int contact_start) {
     // length of the cable
     real cur_length = rod.current_length();
 
@@ -302,31 +298,27 @@ struct ParticleContactGenerator<ParticleContactWrapper> {
     case ParticleContactGeneratorType::CABLE: {
       auto c1 = w.to_cable();
       ParticleContactGenerator<ParticleCable> pcg1;
-      retval = pcg1.add_contact(c1, contact, contact_start,
-                                contact_end);
+      retval = pcg1.add_contact(c1, contact, contact_start);
       break;
     }
 
     case ParticleContactGeneratorType::ROD: {
       auto c2 = w.to_rod();
       ParticleContactGenerator<ParticleRod> pcg2;
-      retval = pcg2.add_contact(c2, contact, contact_start,
-                                contact_end);
+      retval = pcg2.add_contact(c2, contact, contact_start);
       break;
     }
     case ParticleContactGeneratorType::CABLE_CONSTRAINT: {
       auto c3 = w.to_cable_constraint();
       ParticleContactGenerator<ParticleCableConstraint>
           pcg3;
-      retval = pcg3.add_contact(c3, contact, contact_start,
-                                contact_end);
+      retval = pcg3.add_contact(c3, contact, contact_start);
       break;
     }
     case ParticleContactGeneratorType::ROD_CONSTRAINT: {
       auto c4 = w.to_rod_constraint();
       ParticleContactGenerator<ParticleRodConstraint> pcg4;
-      retval = pcg4.add_contact(c4, contact, contact_start,
-                                contact_end);
+      retval = pcg4.add_contact(c4, contact, contact_start);
       break;
     }
     case ParticleContactGeneratorType::GROUND: {
