@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <exception>
 #include <fstream>
@@ -8,14 +9,13 @@
 #include <limits>
 #include <map>
 #include <math.h>
+#include <memory>
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <vector>
-#include <algorithm>
-#include <memory>
 
 // thirdparty modules
 // gl pointer
@@ -29,3 +29,5 @@
 
 // glut
 // #include <GL/glut.h>
+// thirdparty math
+#include <thirdparty/quaternion.hpp>
