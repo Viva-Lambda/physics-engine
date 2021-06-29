@@ -26,7 +26,7 @@ public:
   q4(real _r, const quat::quat_c<real> &bi,
      const quat::quat_c<real> &cj,
      const quat::quat_c<real> &dk)
-      : quat::quaternion<real>(_r, bi, cj, dk){}
+      : quat::quaternion<real>(_r, bi, cj, dk) {}
 
   //
   std::array<real, 4> to_arr() const {
