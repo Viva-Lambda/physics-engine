@@ -19,8 +19,7 @@ public:
 public:
   PhyApp() {}
   PhyApp(unsigned int w, unsigned int h, std::string title)
-      : window_width(w), window_height(h),
-        window_title(title) {
+      : window_width(w), window_height(h), window_title(title) {
     //
   }
   bool init() {
@@ -30,24 +29,20 @@ public:
   }
   virtual bool init_graphics() {
     initializeGLFWMajorMinor(4, 4);
-    window =
-        glfwCreateWindow(window_width, window_height,
-                         window_title.c_str(), NULL, NULL);
+    window = glfwCreateWindow(window_width, window_height, window_title.c_str(),
+                              NULL, NULL);
     if (window == NULL) {
-      std::cout << "failed to create glfw window"
-                << std::endl;
+      std::cout << "failed to create glfw window" << std::endl;
       glfwTerminate();
       return false;
     }
     glfwMakeContextCurrent(window);
 
     // window resize
-    glfwSetFramebufferSizeCallback(
-        window, framebuffer_size_callback);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // load glad
-    if (gladLoadGLLoader(
-            (GLADloadproc)(glfwGetProcAddress)) == 0) {
+    if (gladLoadGLLoader((GLADloadproc)(glfwGetProcAddress)) == 0) {
       std::cout << "Failed to start glad" << std::endl;
       glfwTerminate();
       return false;
@@ -127,33 +122,26 @@ public:
 
   virtual void default_map() {
     auto wind = window;
-    key_map = {
-        std::make_pair<int, std::function<void(void)>>(
-            GLFW_KEY_ESCAPE, [wind]() {
-              glfwSetWindowShouldClose(wind, true);
-            })};
+    key_map = {std::make_pair<int, std::function<void(void)>>(
+        GLFW_KEY_ESCAPE, [wind]() { glfwSetWindowShouldClose(wind, true); })};
   }
 
   virtual std::string get_title() { return window_title; }
   virtual int init_graphics() {
     initializeGLFWMajorMinor(4, 4);
-    window = glfwCreateWindow(
-        width, height, window_title.c_str(), NULL, NULL);
+    window = glfwCreateWindow(width, height, window_title.c_str(), NULL, NULL);
     if (window == NULL) {
-      std::cout << "failed to create glfw window"
-                << std::endl;
+      std::cout << "failed to create glfw window" << std::endl;
       glfwTerminate();
       return -1;
     }
     glfwMakeContextCurrent(window);
 
     // window resize
-    glfwSetFramebufferSizeCallback(
-        window, framebuffer_size_callback);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // load glad
-    if (gladLoadGLLoader(
-            (GLADloadproc)(glfwGetProcAddress)) == 0) {
+    if (gladLoadGLLoader((GLADloadproc)(glfwGetProcAddress)) == 0) {
       std::cout << "Failed to start glad" << std::endl;
       glfwTerminate();
       return -1;
@@ -204,4 +192,4 @@ public:
   /** process certain keys given in key map */
   virtual void process_input() { key(GLFW_KEY_ESCAPE); }
 };
-};
+}; // namespace vivademos

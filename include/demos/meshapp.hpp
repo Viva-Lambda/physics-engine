@@ -1,10 +1,11 @@
 #pragma once
 // show a mesh on window
-#include "demos/transformable.hpp"
+#include <demos/transformable.hpp>
 #include <demos/app.hpp>
 #include <demos/camera.hpp>
 #include <demos/light.hpp>
 #include <demos/mesh.hpp>
+#include <demos/oldmesh.hpp>
 #include <demos/shader.hpp>
 #include <external.hpp>
 
@@ -14,18 +15,16 @@ namespace vivademos {
 class MeshPhyApp : public PhyApp {
   //
 public:
-  std::vector<SimpleShape> shapes;
+  std::vector<Mesh> shapes;
   std::vector<Shader> shaders;
   struct mesh_locks {
     bool cam;
     bool light;
-    bool obj;
   }; // camera, light, object locks respectively
   mesh_locks locks;
 
   MeshPhyApp() {}
-  MeshPhyApp(unsigned int w, unsigned int h,
-             std::string title)
+  MeshPhyApp(unsigned int w, unsigned int h, std::string title)
       : PhyApp(w, h, title) {}
 
   virtual bool init_graphics() override {
@@ -43,15 +42,12 @@ protected:
       moveCamera();
     }
     if (!locks.light) {
-      moveObject();
-    }
-    if (!locks.obj) {
       moveLight();
     }
+
     // other child object keys
 
-    if ((glfwGetKey(window, GLFW_KEY_SPACE) ==
-         GLFW_PRESS) &&
+    if ((glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)) {
       print_keys();
     }
@@ -91,8 +87,7 @@ protected:
   //                            glm::vec3(0.2f, 1.0f, 0.5f),
   //                            glm::vec3(0, 1, 0));
   PointLight light =
-      PointLight(glm::vec3(0.6, 0.6, 1.0f),
-                 glm::vec3(0.2f, 1.0f, 0.5f));
+      PointLight(glm::vec3(0.6, 0.6, 1.0f), glm::vec3(0.2f, 1.0f, 0.5f));
 
   Camera camera;
   // constraints
@@ -115,8 +110,7 @@ protected:
 public:
   MeshDemoApp() {}
   MeshDemoApp(int w, int h, std::string title)
-      : DemoApp(w, h, title),
-        camera(Camera(glm::vec3(0.0f, 0.0f, 10.0f))),
+      : DemoApp(w, h, title), camera(Camera(glm::vec3(0.0f, 0.0f, 10.0f))),
         last_time(glfwGetTime()) {}
 
   /**
@@ -152,9 +146,7 @@ public:
     }
   }
 
-  std::string get_title() override {
-    return "cube mesh viewer";
-  }
+  std::string get_title() override { return "cube mesh viewer"; }
   virtual int init_shaders() {
     lamp_shader = mk_pointlight_lamp_shader();
     lamp_shader.useProgram();
@@ -168,8 +160,7 @@ public:
     glm::vec3 attc(1.0f, 0.0f, 0.0f);
     obj_shader.setFloatUni("ambientCoeff", ambientCoeff);
     obj_shader.setVec3Uni("attC", attc);
-    obj_shader.setVec3Uni("diffColor",
-                          glm::vec3(0.8, 0.6, 0.3));
+    obj_shader.setVec3Uni("diffColor", glm::vec3(0.8, 0.6, 0.3));
     // texture
     obj_shader.setIntUni("shadowMap", 0);
 
@@ -178,8 +169,7 @@ public:
     plane_shader.useProgram();
     plane_shader.setFloatUni("ambientCoeff", ambientCoeff);
     plane_shader.setVec3Uni("attC", attc);
-    plane_shader.setVec3Uni("diffColor",
-                            glm::vec3(0.8, 0.8, 0.6));
+    plane_shader.setVec3Uni("diffColor", glm::vec3(0.8, 0.8, 0.6));
     // texture
     plane_shader.setIntUni("shadowMap", 0);
 
@@ -200,25 +190,18 @@ public:
     glGenTextures(1, &depth_texture);
 
     glBindTexture(GL_TEXTURE_2D, depth_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-                 SHADOW_WIDTH, SHADOW_HEIGHT, 0,
-                 GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                    GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-                    GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                    GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-                    GL_CLAMP_TO_BORDER);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH,
+                 SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     float borderColor[] = {1.0, 1.0, 1.0, 1.0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR,
-                     borderColor);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     // attach depth texture as FBO's depth buffer
     glBindFramebuffer(GL_FRAMEBUFFER, depth_map_fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER,
-                           GL_DEPTH_ATTACHMENT,
-                           GL_TEXTURE_2D, depth_texture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
+                           depth_texture, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -236,18 +219,16 @@ public:
   }
   virtual void set_view() override {
     // setting model, view, projection
-    projection =
-        glm::perspective(glm::radians(camera.zoom),
-                         (float)width / (float)height,
-                         near_plane_dist, far_plane_dist);
+    projection = glm::perspective(glm::radians(camera.zoom),
+                                  (float)width / (float)height, near_plane_dist,
+                                  far_plane_dist);
     viewMat = camera.get_view_matrix();
 
     glm::mat4 lightProj;
     glm::mat4 lightView;
-    lightView = glm::lookAt(light.position, glm::vec3(0.0),
-                            glm::vec3(0.0, 1.0, 0.0));
-    lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f,
-                           1.0f, 7.5f);
+    lightView =
+        glm::lookAt(light.position, glm::vec3(0.0), glm::vec3(0.0, 1.0, 0.0));
+    lightProj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f);
     lightSpaceMatrix = lightProj * lightView;
   }
 
@@ -263,8 +244,7 @@ public:
   /** \brief render scene from light's perspective*/
   virtual void render_scene_depth() {
     depth_shader.useProgram();
-    depth_shader.setMat4Uni("lightSpaceMatrix",
-                            lightSpaceMatrix);
+    depth_shader.setMat4Uni("lightSpaceMatrix", lightSpaceMatrix);
     glm::mat4 identityModel = glm::mat4(1.0f);
 
     // draw scene from light's perspective
@@ -298,8 +278,7 @@ public:
     obj_shader.setMat4Uni("projection", projection);
 
     // set light space matrix for shadow rendering
-    obj_shader.setMat4Uni("lightSpaceMatrix",
-                          lightSpaceMatrix);
+    obj_shader.setMat4Uni("lightSpaceMatrix", lightSpaceMatrix);
 
     // set light position and other info for lightening
     // computation
@@ -312,15 +291,13 @@ public:
     glm::mat4 identityModel = glm::mat4(1.0f);
 
     obj_shader.setMat4Uni("model", identityModel);
-    obj_shader.setVec3Uni("diffColor",
-                          glm::vec3(0.9, 0.8, 0.6));
+    obj_shader.setVec3Uni("diffColor", glm::vec3(0.9, 0.8, 0.6));
     plane.draw();
   }
 
   virtual void render_scene_objects() {
     // draw objects that need to be drawn
-    obj_shader.setVec3Uni("diffColor",
-                          glm::vec3(0.2, 0.7, 0.2));
+    obj_shader.setVec3Uni("diffColor", glm::vec3(0.2, 0.7, 0.2));
 
     obj_shader.setMat4Uni("model", modelMat);
     cube.draw();
@@ -424,8 +401,7 @@ public:
     // other child object keys
     process_other_keys();
 
-    if ((glfwGetKey(window, GLFW_KEY_SPACE) ==
-         GLFW_PRESS) &&
+    if ((glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)) {
       print_keys();
     }
@@ -442,57 +418,45 @@ public:
     //
     float deltaTime = 0.01;
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-      camera.processKeyboard(MOVE_DIRECTION::FORWARD,
-                             deltaTime);
+      camera.processKeyboard(MOVE_DIRECTION::FORWARD, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-      camera.processKeyboard(MOVE_DIRECTION::LEFT,
-                             deltaTime);
+      camera.processKeyboard(MOVE_DIRECTION::LEFT, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-      camera.processKeyboard(MOVE_DIRECTION::BACKWARD,
-                             deltaTime);
+      camera.processKeyboard(MOVE_DIRECTION::BACKWARD, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-      camera.processKeyboard(MOVE_DIRECTION::RIGHT,
-                             deltaTime);
+      camera.processKeyboard(MOVE_DIRECTION::RIGHT, deltaTime);
     }
     auto control_left =
-        (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ==
-         GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS);
     if (control_left) {
-      camera.processKeyboardRotate(ROTATE_DIRECTION::LEFT,
-                                   0.7f);
+      camera.processKeyboardRotate(ROTATE_DIRECTION::LEFT, 0.7f);
     }
     auto control_right =
-        (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ==
-         GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS);
 
     if (control_right) {
-      camera.processKeyboardRotate(ROTATE_DIRECTION::RIGHT,
-                                   0.7f);
+      camera.processKeyboardRotate(ROTATE_DIRECTION::RIGHT, 0.7f);
     }
 
     auto control_up =
-        (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ==
-         GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS);
 
     if (control_up) {
-      camera.processKeyboardRotate(
-          ROTATE_DIRECTION::FORWARD, 0.7f);
+      camera.processKeyboardRotate(ROTATE_DIRECTION::FORWARD, 0.7f);
     }
 
     auto control_down =
-        (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) ==
-         GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS);
 
     if (control_down) {
-      camera.processKeyboardRotate(
-          ROTATE_DIRECTION::BACKWARD, 0.7f);
+      camera.processKeyboardRotate(ROTATE_DIRECTION::BACKWARD, 0.7f);
     }
   }
   /** move light object */
@@ -526,8 +490,7 @@ public:
     }
   }
 
-  virtual void set_model_mat(const glm::mat4 &mmat,
-                             const glm::vec3 &trans) {
+  virtual void set_model_mat(const glm::mat4 &mmat, const glm::vec3 &trans) {
 
     modelMat = glm::translate(mmat, trans);
   }

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <exception>
+#include <chrono>
 #include <fstream>
 #include <functional>
 #include <iostream>

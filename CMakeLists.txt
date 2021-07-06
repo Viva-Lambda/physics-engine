@@ -68,6 +68,19 @@ add_executable(
 #target_link_libraries(final.out AssimpLib)
 target_link_libraries(newdemo.out glfwLib)
 
+# new engine architecture test
+
+add_executable(
+    newarch.out 
+    "src/demos/glad.c"
+    "src/demos/demowindow2.cpp"
+)
+
+#target_link_libraries(final.out AssimpLib)
+target_link_libraries(newarch.out glfwLib)
+
+
+
 
 add_executable(
     MeshDemoAppTest.out 
