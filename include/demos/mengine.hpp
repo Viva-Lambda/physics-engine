@@ -56,6 +56,19 @@ struct MainEngine {
     loop = GameLoop<T>();
     loop.start(game);
   }
+  template <typename OldLevel, typename NewLevel>
+  void load_next_scene(GameLoop<OldLevel> &old_loop, NewLevel &ngame,
+                       GameLoop<NewLevel> &ngame_loop) {
+    // stop the game loop
+    old_loop.stop();
+
+    // unload the ressources
+    OldLevel prevLevel = old_loop.game();
+    GameManager<OldLevel>::unload(prevLevel);
+
+    // start the new scene
+    start_scene(ngame, ngame_loop);
+  }
 
   template <typename T> void start_main(T &game, GameLoop<T> &loop) {
     init_graphics();

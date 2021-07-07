@@ -77,7 +77,8 @@ template <class T> struct GameLoop {
       GameManager<T>::unload(loop_game);
     }
   }
-  bool is_running() { return loop_running; }
+  bool is_active() { return loop_running; }
+  T game() { return loop_game; }
 };
 
 } // namespace vivademos
