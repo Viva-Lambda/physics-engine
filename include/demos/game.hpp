@@ -7,6 +7,8 @@ namespace vivademos {
 
 struct Game {
   GLFWwindow *window;
+  std::string mname = "0";
+
   void set_window(GLFWwindow *wind) { window = wind; }
   virtual void process_input() {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {

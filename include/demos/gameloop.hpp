@@ -40,7 +40,8 @@ template <class T> struct GameLoop {
     loop_game = game;
 
     // start the game
-    GameManager<T>::start(game);
+    GameManager<T>::start(loop_game);
+    std::cout << loop_game.mname << std::endl;
 
     // start the game loop
     start_loop();
@@ -58,6 +59,7 @@ template <class T> struct GameLoop {
       // update game
       while ((lagTime.count() >= MPF) && loop_running) {
         //
+        std::cout << loop_game.mname << std::endl;
         // game input update
         GameManager<T>::process_input(loop_game);
         // game physics update
@@ -67,6 +69,7 @@ template <class T> struct GameLoop {
 
       // draw game
       GameManager<T>::draw(loop_game);
+      std::cout << "draw" << loop_game.mname << std::endl;
 
       // check if the window should close
       // stop game loop then

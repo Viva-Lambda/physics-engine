@@ -41,28 +41,20 @@ public:
 
   // Constructor 1
   Camera(glm::vec3 Position = glm::vec3(0.0f, 0.0f, 0.0f),
-         glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f),
-         float Yaw = YAW, float Pitch = PITCH,
-         float Zoom = ZOOM,
-         glm::vec3 Front = glm::vec3(0.0f, 0.0f, -1.0f),
-         float Speed = SPEED, float Sens = SENSITIVITY);
+         glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f), float Yaw = YAW,
+         float Pitch = PITCH, float Zoom = ZOOM,
+         glm::vec3 Front = glm::vec3(0.0f, 0.0f, -1.0f), float Speed = SPEED,
+         float Sens = SENSITIVITY);
 
   // Constructor 2
-  Camera(float posX, float posY, float posZ, float upX,
-         float upY, float upZ, float Yaw, float Pitch,
-         glm::vec3 Front = glm::vec3(0.0f, 0.0f, -1.0f),
-         float Speed = SPEED, float Sens = SENSITIVITY,
-         float Zoom = ZOOM);
-  void processKeyboardRotate(ROTATE_DIRECTION direction,
-                             float deltaTime);
-  virtual void processKeyboard(MOVE_DIRECTION direction,
-                               float deltaTime);
-  glm::mat4 get_view_matrix() {
-    return transform.get_view_matrix(basis);
-  }
-  virtual void
-  processMouseMovement(float xoffset, float yoffset,
-                       GLboolean pitchBound = true);
+  Camera(float posX, float posY, float posZ, float upX, float upY, float upZ,
+         float Yaw, float Pitch, glm::vec3 Front = glm::vec3(0.0f, 0.0f, -1.0f),
+         float Speed = SPEED, float Sens = SENSITIVITY, float Zoom = ZOOM);
+  void processKeyboardRotate(ROTATE_DIRECTION direction, float deltaTime);
+  virtual void processKeyboard(MOVE_DIRECTION direction, float deltaTime);
+  glm::mat4 get_view_matrix() { return transform.get_view_matrix(basis); }
+  virtual void processMouseMovement(float xoffset, float yoffset,
+                                    GLboolean pitchBound = true);
   void processMouseScroll(float yoffset);
   void setYaw(vivaphysics::real nyaw) {
     transform.rot.set_yaw(nyaw);
@@ -79,9 +71,8 @@ private:
 };
 
 // first constructor
-Camera::Camera(glm::vec3 Position, glm::vec3 Up, float Yaw,
-               float Pitch, float Zoom, glm::vec3 Front,
-               float Speed, float Sens) {
+Camera::Camera(glm::vec3 Position, glm::vec3 Up, float Yaw, float Pitch,
+               float Zoom, glm::vec3 Front, float Speed, float Sens) {
   // create transformable component
   //
   // create translatable component
@@ -107,9 +98,8 @@ Camera::Camera(glm::vec3 Position, glm::vec3 Up, float Yaw,
 }
 
 // second constructor
-Camera::Camera(float posX, float posY, float posZ,
-               float upX, float upY, float upZ, float Yaw,
-               float Pitch, glm::vec3 Front, float Speed,
+Camera::Camera(float posX, float posY, float posZ, float upX, float upY,
+               float upZ, float Yaw, float Pitch, glm::vec3 Front, float Speed,
                float Sens, float Zoom) {
   // create transformable component
   // set position
@@ -135,23 +125,19 @@ Camera::Camera(float posX, float posY, float posZ,
   updateCameraVectors();
 }
 void Camera::updateCameraVectors() {
-  vivaphysics::euler_angles angles =
-      transform.rot.to_euler();
+  vivaphysics::euler_angles angles = transform.rot.to_euler();
   basis.from_euler(angles, worldUp);
 }
-void Camera::processKeyboard(MOVE_DIRECTION direction,
-                             float deltaTime) {
+void Camera::processKeyboard(MOVE_DIRECTION direction, float deltaTime) {
   float velocity = movementSpeed * deltaTime;
   transform.trans.move(direction, velocity, basis);
 }
 
-void Camera::processMouseMovement(float xoffset,
-                                  float yoffset,
+void Camera::processMouseMovement(float xoffset, float yoffset,
                                   GLboolean pitchBound) {
   xoffset *= mouseSensitivity;
   yoffset *= mouseSensitivity;
-  vivaphysics::euler_angles angles =
-      transform.rot.to_euler();
+  vivaphysics::euler_angles angles = transform.rot.to_euler();
   vivaphysics::real yaw = angles.yaw();
   vivaphysics::real pitch = angles.pitch();
 
@@ -170,13 +156,11 @@ void Camera::processMouseMovement(float xoffset,
   updateCameraVectors();
 }
 
-void Camera::processKeyboardRotate(
-    ROTATE_DIRECTION direction, float deltaTime) {
-  transform.rot.rotate_by_euler(direction, deltaTime,
-                                movementSpeed);
+void Camera::processKeyboardRotate(ROTATE_DIRECTION direction,
+                                   float deltaTime) {
+  transform.rot.rotate_by_euler(direction, deltaTime, movementSpeed);
   updateCameraVectors();
 }
-
 void Camera::processMouseScroll(float yoffset) {
 
   if (zoom >= 1.0f && zoom <= 45.0f) {
@@ -189,4 +173,4 @@ void Camera::processMouseScroll(float yoffset) {
     zoom = 45.0f;
   }
 }
-};
+}; // namespace vivademos

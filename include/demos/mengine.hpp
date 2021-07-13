@@ -51,6 +51,7 @@ struct MainEngine {
 
     // load game assets
     GameManager<T>::load(game);
+    std::cout << game.mname << std::endl;
 
     // start game loop
     loop = GameLoop<T>();

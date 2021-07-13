@@ -1,0 +1,258 @@
+#pragma once
+// basic skeleton for showing demos of our physics engine
+#include <demos/camera.hpp>
+#include <demos/gamemanager.hpp>
+#include <demos/light.hpp>
+#include <demos/mesh.hpp>
+#include <demos/shader.hpp>
+#include <demos/transformable.hpp>
+#include <external.hpp>
+
+using namespace vivademos;
+
+namespace vivademos {
+struct Game2 {
+  GLFWwindow *window;
+  std::vector<Mesh> shapes;
+  std::vector<Shader> shaders;
+  Camera cam;
+  PointLight light;
+  vivaphysics::real last_time;
+
+  std::string mname = "0";
+
+  Game2() {}
+
+  struct mesh_locks {
+    bool cam = false;
+    bool light = false;
+  }; // camera, light, object locks respectively
+  mesh_locks locks;
+
+  void set_window(GLFWwindow *wind) { window = wind; }
+  void process_input() {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+      glfwSetWindowShouldClose(window, true);
+    }
+    if (!locks.cam) {
+      moveCamera();
+    }
+    if (!locks.light) {
+      moveLight();
+    }
+
+    if ((glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)) {
+      print_keys();
+    }
+    process_toggles();
+  }
+  void process_toggles() {
+    if (glfwGetKey(window, GLFW_KEY_KP_7) == GLFW_PRESS) {
+      toggle_camera_movement();
+    }
+    if (glfwGetKey(window, GLFW_KEY_KP_8) == GLFW_PRESS) {
+      toggle_light_movement();
+    }
+  }
+  void toggle_camera_movement() {
+    if (locks.cam) {
+      locks.cam = false;
+    } else {
+      locks.cam = true;
+    }
+  }
+  void toggle_light_movement() {
+    if (locks.light) {
+      locks.light = false;
+    } else {
+      locks.light = true;
+    }
+  }
+  vivaphysics::real dtime() {
+    auto current = static_cast<vivaphysics::real>(glfwGetTime());
+    auto d = current - last_time;
+    last_time = current;
+    return d;
+  }
+  /**move camera using a model matrix*/
+  void moveCamera() {
+    auto delta = dtime();
+    if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)) {
+      cam.processKeyboard(MOVE_DIRECTION::FORWARD, delta);
+    }
+    if ((glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)) {
+      cam.processKeyboard(MOVE_DIRECTION::BACKWARD, delta);
+    }
+    if ((glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)) {
+      cam.processKeyboard(MOVE_DIRECTION::LEFT, delta);
+    }
+    if ((glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)) {
+      cam.processKeyboard(MOVE_DIRECTION::RIGHT, delta);
+    }
+    if ((glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)) {
+      cam.processKeyboardRotate(ROTATE_DIRECTION::RIGHT, delta);
+    }
+    if ((glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)) {
+      cam.processKeyboardRotate(ROTATE_DIRECTION::LEFT, delta);
+    }
+    if ((glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)) {
+      cam.processKeyboardRotate(ROTATE_DIRECTION::FORWARD, delta);
+    }
+    if ((glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
+        (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)) {
+      cam.processKeyboardRotate(ROTATE_DIRECTION::BACKWARD, delta);
+    }
+  }
+  void moveLight() {
+    auto delta = dtime(); //
+
+    if ((glfwGetKey(window, GLFW_KEY_KP_1) == GLFW_PRESS)) {
+      light.processKeyboard(MOVE_DIRECTION::UP, delta);
+    }
+    if ((glfwGetKey(window, GLFW_KEY_KP_2) == GLFW_PRESS)) {
+      light.processKeyboard(MOVE_DIRECTION::DOWN, delta);
+    }
+    if ((glfwGetKey(window, GLFW_KEY_KP_3) == GLFW_PRESS)) {
+      light.processKeyboard(MOVE_DIRECTION::RIGHT, delta);
+    }
+    if ((glfwGetKey(window, GLFW_KEY_KP_4) == GLFW_PRESS)) {
+      light.processKeyboard(MOVE_DIRECTION::LEFT, delta);
+    }
+    if ((glfwGetKey(window, GLFW_KEY_KP_5) == GLFW_PRESS)) {
+      light.processKeyboard(MOVE_DIRECTION::FORWARD, delta);
+    }
+    if ((glfwGetKey(window, GLFW_KEY_KP_5) == GLFW_PRESS)) {
+      light.processKeyboard(MOVE_DIRECTION::BACKWARD, delta);
+    }
+  }
+  void print_toggle_movement_keys() const {
+    std::cout << "Toggle Movement:" << std::endl;
+    std::cout << "-------------------------" << std::endl;
+    std::cout << "key pad 7 camera" << std::endl;
+    std::cout << "key pad 8 light" << std::endl;
+    std::cout << "key pad 9 object" << std::endl;
+    std::cout << "-------------------------" << std::endl;
+  }
+  void print_move_rotate_camera_keys() const {
+    std::cout << "Move Rotate Camera Keys:" << std::endl;
+    std::cout << "-------------------------" << std::endl;
+    std::cout << "UP_ARROW move forward" << std::endl;
+    std::cout << "LEFT_ARROW move left" << std::endl;
+    std::cout << "DOWN_ARROW move backward" << std::endl;
+    std::cout << "RIGHT_ARROW move right" << std::endl;
+    std::cout << "CTRL+LEFT rotate left" << std::endl;
+    std::cout << "CTRL+RIGHT rotate right" << std::endl;
+    std::cout << "CTRL+DOWN rotate downward" << std::endl;
+    std::cout << "CTRL+UP rotate upward" << std::endl;
+    std::cout << "-------------------------" << std::endl;
+  }
+  void print_move_light_keys() const {
+    std::cout << "Move Light Keys:" << std::endl;
+    std::cout << "-------------------------" << std::endl;
+    std::cout << "key pad 1 move upward" << std::endl;
+    std::cout << "key pad 2 move downward" << std::endl;
+    std::cout << "key pad 3 move right" << std::endl;
+    std::cout << "key pad 4 move left" << std::endl;
+    std::cout << "key pad 5 move forward" << std::endl;
+    std::cout << "key pad 6 move backward" << std::endl;
+    std::cout << "-------------------------" << std::endl;
+  }
+  void print_keys() {
+    std::cout << "Print Keys:" << std::endl;
+    std::cout << "SPACE + V" << std::endl;
+    std::cout << "-------------------------" << std::endl;
+    print_toggle_movement_keys();
+    print_move_rotate_camera_keys();
+    print_move_light_keys();
+  }
+  bool should_close() const { return glfwWindowShouldClose(window); }
+};
+template <> struct GameManager<Game2> {
+  // call at every frame
+  static void process_input(Game2 &game) { game.process_input(); }
+
+  // call at every frame
+  static bool should_close(Game2 &game) { return game.should_close(); }
+
+  // call at every frame
+  static void draw(Game2 &game) {
+
+    // clear the current frame
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // update uniform values
+    // get camera view matrix;
+    auto view = game.cam.get_view_matrix();
+
+    // redraw meshes
+    for (unsigned int i = 0; i < game.shapes.size(); i++) {
+      Mesh m = game.shapes[i];
+      Shader s = game.shaders[i];
+      // s.useProgram();
+
+      // set model matrix
+      auto model = glm::mat4(1.0f);
+      s.setMat4Uni("model", model);
+
+      s.setMat4Uni("view", view);
+
+      // s.useProgram();
+      m.draw(s);
+    }
+  }
+
+  // call at every frame for physics update
+  static void update(Game2 &game) {
+
+    game.mname = "3";
+    //
+    glfwSwapBuffers(game.window);
+    glfwPollEvents();
+  }
+
+  // executed once per level
+  static void unload(Game2 &game) {
+    game.mname = "4";
+    return;
+  }
+  static void load(Game2 &game) {
+
+    game.mname = "2";
+    // handle ressource management from file system
+    Mesh m1 = SimpleTriangleMesh();
+    std::vector<Mesh> ms;
+    ms.push_back(m1);
+    game.shapes = ms;
+
+    // set up shader data
+    Shader obj_shader = mk_const_color_mesh_shader();
+    std::vector<Shader> shdrs;
+    shdrs.push_back(obj_shader);
+    game.shaders = shdrs;
+
+    // set up camera
+    game.cam = Camera(glm::vec3(0.0f, 0.0f, 10.0f));
+
+    // set up light
+    game.light =
+        PointLight(glm::vec3(0.6, 0.6, 1.0f), glm::vec3(0.2f, 1.0f, 0.5f));
+
+    // set up last time
+    game.last_time = static_cast<vivaphysics::real>(glfwGetTime());
+
+    return;
+  }
+  // execute once per level
+  static void start(Game2 &game) {
+    // set up mesh data
+    game.mname = "1";
+
+    return;
+  }
+};
+
+} // namespace vivademos
