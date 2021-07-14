@@ -30,7 +30,6 @@ struct Mesh {
       : vertices(vs), textures(ts), indices(ids) {
     setup_mesh();
   }
-
   void draw(Shader shdr) {
     //
     // bind textures
@@ -86,7 +85,6 @@ struct Mesh {
     //
     glActiveTexture(GL_TEXTURE0);
   }
-
   void setup_mesh() {
     //
     glGenVertexArrays(1, &vao);

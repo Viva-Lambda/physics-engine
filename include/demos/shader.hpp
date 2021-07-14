@@ -46,6 +46,7 @@ public:
   // program id
   GLuint programId;
   std::string shaderName = "MyShader";
+  std::vector<std::string> spaths;
 
   // constructor takes the path of the shaders and builts
   // them
@@ -64,65 +65,65 @@ public:
   // utility functions for setting uniforms
   void setBoolUni(const std::string &name, bool value) const {
     // set boolean value to given uniform name
-    int uniLocation = glGetUniformLocation(this->programId, name.c_str());
+    int uniLocation = glGetUniformLocation(programId, name.c_str());
     checkUniformLocation(uniLocation, name);
     glUniform1i(uniLocation, (int)value);
   };
   void setIntUni(const std::string &name, int value) const {
     // set boolean value to given uniform name
-    int uniLocation = glGetUniformLocation(this->programId, name.c_str());
+    int uniLocation = glGetUniformLocation(programId, name.c_str());
     checkUniformLocation(uniLocation, name);
     glUniform1i(uniLocation, value);
   };
   void setFloatUni(const std::string &name, float value) const {
     // set boolean value to given uniform name
-    int uniLocation = glGetUniformLocation(this->programId, name.c_str());
+    int uniLocation = glGetUniformLocation(programId, name.c_str());
     checkUniformLocation(uniLocation, name);
     glUniform1f(uniLocation, value);
   };
   void setVec2Uni(const std::string &name, const glm::vec2 &value) const {
-    int uniLocation = glGetUniformLocation(this->programId, name.c_str());
+    int uniLocation = glGetUniformLocation(programId, name.c_str());
     checkUniformLocation(uniLocation, name);
     glUniform2fv(uniLocation, 1, glm::value_ptr(value));
   }
   void setVec2Uni(const std::string &name, float x, float y) const {
-    int uniLocation = glGetUniformLocation(this->programId, name.c_str());
+    int uniLocation = glGetUniformLocation(programId, name.c_str());
     checkUniformLocation(uniLocation, name);
     glUniform2f(uniLocation, x, y);
   }
   void setVec3Uni(const std::string &name, const glm::vec3 &value) const {
-    int uniLocation = glGetUniformLocation(this->programId, name.c_str());
+    int uniLocation = glGetUniformLocation(programId, name.c_str());
     checkUniformLocation(uniLocation, name);
     glUniform3fv(uniLocation, 1, glm::value_ptr(value));
   }
   void setVec3Uni(const std::string &name, float x, float y, float z) const {
-    int uniLocation = glGetUniformLocation(this->programId, name.c_str());
+    int uniLocation = glGetUniformLocation(programId, name.c_str());
     checkUniformLocation(uniLocation, name);
     glUniform3f(uniLocation, x, y, z);
   }
   void setVec4Uni(const std::string &name, const glm::vec4 &value) const {
-    int uniLocation = glGetUniformLocation(this->programId, name.c_str());
+    int uniLocation = glGetUniformLocation(programId, name.c_str());
     checkUniformLocation(uniLocation, name);
     glUniform4fv(uniLocation, 1, glm::value_ptr(value));
   }
   void setVec4Uni(const std::string &name, float x, float y, float z,
                   float w) const {
-    int uniLocation = glGetUniformLocation(this->programId, name.c_str());
+    int uniLocation = glGetUniformLocation(programId, name.c_str());
     checkUniformLocation(uniLocation, name);
     glUniform4f(uniLocation, x, y, z, w);
   }
   void setMat2Uni(const std::string &name, glm::mat2 &value) const {
-    int uniLocation = glGetUniformLocation(this->programId, name.c_str());
+    int uniLocation = glGetUniformLocation(programId, name.c_str());
     checkUniformLocation(uniLocation, name);
     glUniformMatrix2fv(uniLocation, 1, GL_FALSE, glm::value_ptr(value));
   }
   void setMat3Uni(const std::string &name, glm::mat3 &value) const {
-    int uniLocation = glGetUniformLocation(this->programId, name.c_str());
+    int uniLocation = glGetUniformLocation(programId, name.c_str());
     checkUniformLocation(uniLocation, name);
     glUniformMatrix3fv(uniLocation, 1, GL_FALSE, glm::value_ptr(value));
   }
   void setMat4Uni(const std::string &name, glm::mat4 &value) const {
-    int uniLocation = glGetUniformLocation(this->programId, name.c_str());
+    int uniLocation = glGetUniformLocation(programId, name.c_str());
     checkUniformLocation(uniLocation, name);
     glUniformMatrix4fv(uniLocation, 1, GL_FALSE, glm::value_ptr(value));
   }
@@ -168,6 +169,7 @@ GLuint Shader::loadShader(const GLchar *shaderFilePath,
     std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
   }
   const char *shaderCode = shaderCodeStr.c_str();
+  spaths.push_back(shaderCodeStr + "\n\n");
 
   // lets source the shader
   glShaderSource(shader, 1, &shaderCode, NULL);
@@ -205,15 +207,15 @@ Shader::Shader(const GLchar *computePath) {
 Shader::Shader(const GLchar *vertexPath, const GLchar *fragmentPath,
                const GLchar *computePath) {
   // loading shaders
-  this->programId = glCreateProgram();
-  GLuint vshader = this->loadShader(vertexPath, "VERTEX");
-  GLuint fshader = this->loadShader(fragmentPath, "FRAGMENT");
-  GLuint cshader = this->loadShader(computePath, "COMPUTE");
-  glAttachShader(this->programId, vshader);
-  glAttachShader(this->programId, fshader);
-  glAttachShader(this->programId, cshader);
-  glLinkProgram(this->programId);
-  checkShaderProgramCompilation(this->programId, shaderName.c_str());
+  programId = glCreateProgram();
+  GLuint vshader = loadShader(vertexPath, "VERTEX");
+  GLuint fshader = loadShader(fragmentPath, "FRAGMENT");
+  GLuint cshader = loadShader(computePath, "COMPUTE");
+  glAttachShader(programId, vshader);
+  glAttachShader(programId, fshader);
+  glAttachShader(programId, cshader);
+  glLinkProgram(programId);
+  checkShaderProgramCompilation(programId, shaderName.c_str());
   glDeleteShader(vshader);
   glDeleteShader(fshader);
   glDeleteShader(cshader);
@@ -272,11 +274,23 @@ Shader mk_const_color_mesh_shader() {
   const GLchar *fragment_source = "media/demos/glsl/meshcolor.frag";
   return Shader(vertex_path, fragment_source);
 }
+
 Shader mk_const_color_mesh_shader(const glm::vec3 &color) {
   Shader shdr = mk_const_color_mesh_shader();
   shdr.useProgram();
   shdr.setVec3Uni("diffColor", color);
   return shdr;
+}
+Shader mk_simple_mesh_shader() {
+  const GLchar *vertex_path = "media/demos/glsl/simplemesh.vert";
+  const GLchar *fragment_source = "media/demos/glsl/simplemesh.frag";
+  return Shader(vertex_path, fragment_source);
+}
+
+Shader mk_simple_mesh_shader2() {
+  const GLchar *vertex_path = "media/demos/glsl/simplemesh.vert";
+  const GLchar *fragment_source = "media/demos/glsl/simplemesh2.frag";
+  return Shader(vertex_path, fragment_source);
 }
 Shader mk_pointlight_lamp_shader() {
   const GLchar *vertex_path = "media/demos/glsl/basic_point_light.vert";

@@ -4,21 +4,16 @@
 in vec3 Normal;
 in vec3 FragPos;
 in vec2 TexCoord;
-// in mat3 TBN;
-in vec4 FragPosLightSpace;
 
 out vec4 FragColor;
 
 uniform float ambientCoeff; // a good value is 0.1
 uniform vec3 attC;          // x=c1, y=c2, z=c3
 uniform float lightIntensity = 1.0;
-// textures
-uniform sampler2D shadowMap;
-// uniform vec3 viewPos;
+
 uniform vec3 lightPos; // update
 uniform vec3 diffColor; // update
-// implement computations
-//
+
 float computeAttenuation(vec3 att, vec3 lpos, vec3 fpos) {
   float lfragdist = distance(lpos, fpos);
   float distSqr = lfragdist * lfragdist;
@@ -37,37 +32,6 @@ vec3 getDiffuseColor(vec3 ldir, vec3 normal, vec3 color) {
   return max(costheta, 0.0) * color;
 };
 
-float compute_shadow(vec4 fposLightSpace, vec3 lpos, vec3 fpos) {
-  vec3 proj = fposLightSpace.xyz / fposLightSpace.w;
-  proj = proj * 0.5 + 0.5;
-  // closest depth from light's perspective
-  float closest_depth = texture(shadowMap, proj.xy).r;
-  // get current fragment's depth from lights perspective
-  float current_depth = proj.z;
-
-  // calculate bias
-  vec3 surfaceNormal = getSurfaceNormal();
-  vec3 lightDirection = getLightDir(lpos, fpos);
-
-  float bias = max(0.05 * (1.0 - dot(surfaceNormal, lightDirection)), 0.005);
-  // PCF
-  float shadow = 0.0;
-  vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-  for (int x = -1; x <= 1; ++x) {
-    for (int y = -1; y <= 1; ++y) {
-      float pcfDepth = texture(shadowMap, proj.xy + vec2(x, y) * texelSize).r;
-      shadow += current_depth - bias > pcfDepth ? 1.0 : 0.0;
-    }
-  }
-  shadow /= 9.0;
-
-  // keep the shadow at 0.0 when outside the far_plane region of the light's
-  // frustum.
-  if (proj.z > 1.0)
-    shadow = 0.0;
-
-  return shadow;
-}
 
 vec3 getSpecColor(vec3 lightDir, vec3 normal);
 
@@ -86,9 +50,8 @@ void main() {
   float attenuation = computeAttenuation(attC, lightPos, FragPos);
   vec3 diffuse = attenuation * diffuseColor * lightIntensity;
   // adding specular terms
-  float shadow = compute_shadow(FragPosLightSpace, lightPos, FragPos);
   // specmap
   float gamma = 2.2;
-  vec3 total = ambient + (1.0 - shadow) * diffuse;
+  vec3 total = ambient + diffuse;
   FragColor = vec4(pow(total, vec3(1.0 / gamma)), 1.0);
 }

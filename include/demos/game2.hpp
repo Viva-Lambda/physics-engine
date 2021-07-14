@@ -19,6 +19,10 @@ struct Game2 {
   PointLight light;
   vivaphysics::real last_time;
 
+  // game window size
+  unsigned int window_width;
+  unsigned int window_height;
+
   std::string mname = "0";
 
   Game2() {}
@@ -29,7 +33,13 @@ struct Game2 {
   }; // camera, light, object locks respectively
   mesh_locks locks;
 
-  void set_window(GLFWwindow *wind) { window = wind; }
+  void set_window(GLFWwindow *wind) {
+    window = wind;
+    int w, h;
+    glfwGetWindowSize(wind, &w, &h);
+    window_width = static_cast<unsigned int>(w);
+    window_height = static_cast<unsigned int>(h);
+  }
   void process_input() {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
       glfwSetWindowShouldClose(window, true);
@@ -185,22 +195,27 @@ template <> struct GameManager<Game2> {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // update uniform values
+    auto projection =
+        game.cam.perspective(game.window_width, game.window_height);
     // get camera view matrix;
-    auto view = game.cam.get_view_matrix();
+    glm::mat4 view = game.cam.get_view_matrix();
+
+    // set model matrix
+    glm::mat4 model = glm::mat4(1.0f);
 
     // redraw meshes
     for (unsigned int i = 0; i < game.shapes.size(); i++) {
       Mesh m = game.shapes[i];
       Shader s = game.shaders[i];
-      // s.useProgram();
+      gerr();
 
-      // set model matrix
-      auto model = glm::mat4(1.0f);
+      s.useProgram();
       s.setMat4Uni("model", model);
+      gerr();
 
       s.setMat4Uni("view", view);
+      s.setMat4Uni("projection", projection);
 
-      // s.useProgram();
       m.draw(s);
     }
   }
@@ -223,26 +238,6 @@ template <> struct GameManager<Game2> {
 
     game.mname = "2";
     // handle ressource management from file system
-    Mesh m1 = SimpleTriangleMesh();
-    std::vector<Mesh> ms;
-    ms.push_back(m1);
-    game.shapes = ms;
-
-    // set up shader data
-    Shader obj_shader = mk_const_color_mesh_shader();
-    std::vector<Shader> shdrs;
-    shdrs.push_back(obj_shader);
-    game.shaders = shdrs;
-
-    // set up camera
-    game.cam = Camera(glm::vec3(0.0f, 0.0f, 10.0f));
-
-    // set up light
-    game.light =
-        PointLight(glm::vec3(0.6, 0.6, 1.0f), glm::vec3(0.2f, 1.0f, 0.5f));
-
-    // set up last time
-    game.last_time = static_cast<vivaphysics::real>(glfwGetTime());
 
     return;
   }
@@ -250,6 +245,28 @@ template <> struct GameManager<Game2> {
   static void start(Game2 &game) {
     // set up mesh data
     game.mname = "1";
+    Mesh m1 = SimpleTriangleMesh();
+    game.shapes.push_back(m1);
+
+    // set up shader data
+    Shader obj_shader = mk_simple_mesh_shader2();
+    obj_shader.useProgram();
+    obj_shader.setVec3Uni("diffColor", glm::vec3(0.1, 0.1, 0.6));
+    gerr();
+    game.shaders.push_back(obj_shader);
+
+    // set up camera
+    game.cam = Camera(glm::vec3(0.0f, 0.0f, 10.0f));
+
+    game.cam.set_near(0.1);
+    game.cam.set_far(1000.0);
+
+    // set up light
+    game.light =
+        PointLight(glm::vec3(0.6, 0.6, 1.0f), glm::vec3(0.2f, 1.0f, 0.5f));
+
+    // set up last time
+    game.last_time = static_cast<vivaphysics::real>(glfwGetTime());
 
     return;
   }

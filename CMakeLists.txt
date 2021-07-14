@@ -79,40 +79,51 @@ add_executable(
 #target_link_libraries(final.out AssimpLib)
 target_link_libraries(newarch.out glfwLib)
 
-
-
+# second test with meshes etc
 
 add_executable(
-    MeshDemoAppTest.out 
+    newarch2.out 
     "src/demos/glad.c"
-    "src/demos/meshdemowindow.cpp"
-    )
+    "src/demos/demowindow3.cpp"
+)
+
+#target_link_libraries(final.out AssimpLib)
+target_link_libraries(newarch2.out glfwLib)
+
+
+#add_executable(
+#    MeshDemoAppTest.out 
+#    "src/demos/glad.c"
+#    "src/demos/meshdemowindow.cpp"
+#    )
 #target_link_libraries(final.out AssimpLib)
 
-target_link_libraries(MeshDemoAppTest.out glfwLib)
+#target_link_libraries(MeshDemoAppTest.out glfwLib)
 
 # ballistics demo
-add_executable(
-    BallisticDemo.out 
-    "src/demos/glad.c"
-    "src/demos/ballisticdemo.cpp"
-    )
+#add_executable(
+#   BallisticDemo.out 
+#   "src/demos/glad.c"
+#   "src/demos/ballisticdemo.cpp"
+#   )
 #target_link_libraries(final.out AssimpLib)
 
 
-target_link_libraries(BallisticDemo.out glfwLib)
+#target_link_libraries(BallisticDemo.out glfwLib)
 
 # platform demo
-add_executable(
-    PlatformDemo.out 
-    "src/demos/glad.c"
-    "src/demos/platform.cpp"
-    )
-target_link_libraries(PlatformDemo.out glfwLib)
+#add_executable(
+#   PlatformDemo.out 
+#   "src/demos/glad.c"
+#   "src/demos/platform.cpp"
+#   )
+#target_link_libraries(PlatformDemo.out glfwLib)
 
 install(TARGETS main.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS demoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS newdemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
-install(TARGETS MeshDemoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
-install(TARGETS BallisticDemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
-install(TARGETS PlatformDemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
+install(TARGETS newarch.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
+install(TARGETS newarch2.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
+#install(TARGETS MeshDemoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
+#install(TARGETS BallisticDemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
+#install(TARGETS PlatformDemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")

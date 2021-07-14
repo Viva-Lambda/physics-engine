@@ -39,6 +39,9 @@ public:
   float mouseSensitivity;
   float zoom;
 
+  float near;
+  float far;
+
   // Constructor 1
   Camera(glm::vec3 Position = glm::vec3(0.0f, 0.0f, 0.0f),
          glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f), float Yaw = YAW,
@@ -65,6 +68,10 @@ public:
     updateCameraVectors();
   }
   void setZoom(float nzoom) { zoom = nzoom; }
+
+  void set_near(float n) { near = n; }
+  void set_far(float f) { far = f; }
+  glm::mat4 perspective(unsigned int width, unsigned int height) const;
 
 private:
   void updateCameraVectors();
@@ -131,6 +138,12 @@ void Camera::updateCameraVectors() {
 void Camera::processKeyboard(MOVE_DIRECTION direction, float deltaTime) {
   float velocity = movementSpeed * deltaTime;
   transform.trans.move(direction, velocity, basis);
+}
+
+glm::mat4 Camera::perspective(unsigned int width, unsigned int height) const {
+  return glm::perspective(
+      glm::radians(zoom),
+      static_cast<float>(width) / static_cast<float>(height), near, far);
 }
 
 void Camera::processMouseMovement(float xoffset, float yoffset,

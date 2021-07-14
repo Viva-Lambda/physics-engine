@@ -1,8 +1,8 @@
 #pragma once
 // simple vertex object
 #include <demos/meshutils.hpp>
-#include<vivaphysics/core.h>
 #include <external.hpp>
+#include <vivaphysics/core.h>
 
 using namespace vivademos;
 //
@@ -21,7 +21,7 @@ struct Vertex {
          const glm::vec3 &tan, const glm::vec3 &bitan)
       : pos(p), normal(n), texCoord(t), tangent(tan), bitangent(bitan) {}
   Vertex(const glm::vec3 &p, const glm::vec3 &n, const glm::vec2 &t)
-      : pos(p), normal(n), texCoord(t) {}
+      : pos(p), normal(n), texCoord(t), tangent(0, 0, 0), bitangent(0, 0, 0) {}
   Vertex(vivaphysics::real px, vivaphysics::real py, vivaphysics::real pz,
          vivaphysics::real nx, vivaphysics::real ny, vivaphysics::real nz,
          vivaphysics::real tx, vivaphysics::real ty, vivaphysics::real tanx,
@@ -33,6 +33,7 @@ struct Vertex {
   Vertex(vivaphysics::real px, vivaphysics::real py, vivaphysics::real pz,
          vivaphysics::real nx, vivaphysics::real ny, vivaphysics::real nz,
          vivaphysics::real tx, vivaphysics::real ty)
-      : pos(px, py, pz), normal(nx, ny, nz), texCoord(tx, ty) {}
+      : pos(px, py, pz), normal(nx, ny, nz), texCoord(tx, ty), tangent(0, 0, 0),
+        bitangent(0, 0, 0) {}
 };
 } // namespace vivademos
