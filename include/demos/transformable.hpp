@@ -74,6 +74,14 @@ struct Translatable {
 struct Rotatable {
   vivaphysics::q4 quat;
   bool rot_check = false;
+
+  // euler angles
+  euler_angles angles;
+  bool has_yaw = false;
+  bool has_pitch = false;
+  bool has_roll = false;
+
+  //
   Rotatable() : rot_check(false) {}
   Rotatable(const vivaphysics::v3 &a, vivaphysics::real r)
       : quat(r, a), rot_check(true) {}
@@ -118,7 +126,21 @@ struct Rotatable {
         (roll_cos * yaw_cos * pitch_sin) + (roll_sin * yaw_sin * pitch_cos);
     auto q_i =
         (roll_sin * pitch_cos * yaw_cos) - (roll_cos * pitch_sin * yaw_sin);
-    return Rotatable(q_r, q_i, q_j, q_k);
+    auto rot = Rotatable(q_r, q_i, q_j, q_k);
+
+    // set given euler angles
+    // set yaw
+    rot.angles.set_yaw(yaw);
+    rot.has_yaw = true;
+
+    // set pitch value
+    rot.angles.set_pitch(pitch);
+    rot.has_pitch = true;
+
+    // set roll value
+    rot.angles.set_roll(roll);
+    rot.has_roll = true;
+    return rot;
   }
 
   static Rotatable fromEulerAngles(const vivaphysics::euler_angles &angles) {
@@ -126,31 +148,46 @@ struct Rotatable {
     return fromEulerAngles(angles.yaw(), angles.pitch(), angles.roll());
   }
   vivaphysics::euler_angles to_euler() const {
-    auto qri = 2 * (quat.scalar() * quat.x() + quat.y() * quat.z());
-    auto qcos = 1 - 2 * (quat.x() * quat.x() + quat.y() * quat.y());
-    // compute roll (x-axis rotation) value
-    auto roll = std::atan2(qri, qcos);
+    // declare euler angles
+    vivaphysics::euler_angles eangles;
 
-    // compute pitch (y axis rotation) value
-    auto sinp = 2 * (quat.scalar() * quat.y() - quat.z() * quat.x());
-    real pitch;
-    if (std::abs(sinp) >= 1) {
-      pitch = std::copysign(M_PI / 2, sinp);
+    // set roll
+    if (has_roll == false) {
+      auto qri = 2 * (quat.scalar() * quat.x() + quat.y() * quat.z());
+      auto qcos = 1 - 2 * (quat.x() * quat.x() + quat.y() * quat.y());
+      // compute roll (x-axis rotation) value
+      auto roll = std::atan2(qri, qcos);
+      eangles.set_roll(roll);
     } else {
-      pitch = std::asin(sinp);
+      eangles.set_roll(angles.roll());
+    }
+
+    //
+    if (has_pitch == false) {
+      // compute pitch (y axis rotation) value
+      auto sinp = 2 * (quat.scalar() * quat.y() - quat.z() * quat.x());
+      real pitch;
+      if (std::abs(sinp) >= 1) {
+        pitch = std::copysign(M_PI / 2, sinp);
+      } else {
+        pitch = std::asin(sinp);
+      }
+      eangles.set_pitch(pitch);
+    } else {
+      eangles.set_pitch(angles.pitch());
     }
     // compute yaw (z axis rotation) value
-    auto sin_yaw = 2 * (quat.scalar() * quat.z() + quat.x() * quat.y());
-    auto cos_yaw = 1 - 2 * (quat.y() * quat.y() + quat.z() * quat.z());
-    auto yaw = std::atan2(sin_yaw, cos_yaw);
-    vivaphysics::euler_angles angles;
-    angles.set_yaw(yaw);
-    angles.set_roll(roll);
-    angles.set_pitch(pitch);
-    return angles;
+    if (has_yaw == false) {
+      auto sin_yaw = 2 * (quat.scalar() * quat.z() + quat.x() * quat.y());
+      auto cos_yaw = 1 - 2 * (quat.y() * quat.y() + quat.z() * quat.z());
+      auto yaw = std::atan2(sin_yaw, cos_yaw);
+      eangles.set_yaw(yaw);
+    } else {
+      eangles.set_yaw(angles.yaw());
+    }
+    return eangles;
   }
   void set_euler(vivaphysics::real v, vivaphysics::EULER_ANGLE a) {
-    auto angles = to_euler();
     switch (a) {
     case vivaphysics::EULER_ANGLE::YAW: {
       angles.set_yaw(v);
@@ -176,9 +213,9 @@ struct Rotatable {
   void rotate_by_euler(ROTATE_DIRECTION direction, vivaphysics::real deltaTime,
                        vivaphysics::real speed) {
     deltaTime *= speed;
-    euler_angles angles = to_euler();
-    vivaphysics::real yaw = angles.yaw();
-    vivaphysics::real pitch = angles.pitch();
+    euler_angles eangles = to_euler();
+    vivaphysics::real yaw = eangles.yaw();
+    vivaphysics::real pitch = eangles.pitch();
     if (direction == ROTATE_DIRECTION::FORWARD) {
       pitch += deltaTime;
     } else if (direction == ROTATE_DIRECTION::BACKWARD) {
@@ -191,9 +228,9 @@ struct Rotatable {
       throw std::runtime_error("rotate by euler accepts only forward,backward, "
                                "left, right rotation directions");
     }
-    angles.set_yaw(yaw);
-    angles.set_pitch(pitch);
-    *this = Rotatable::fromEulerAngles(angles);
+    eangles.set_yaw(yaw);
+    eangles.set_pitch(pitch);
+    *this = Rotatable::fromEulerAngles(eangles);
   }
   glm::mat4 rotate(const glm::mat4 &model) const {
     //

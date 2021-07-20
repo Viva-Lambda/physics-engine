@@ -132,8 +132,8 @@ Camera::Camera(float posX, float posY, float posZ, float upX, float upY,
   updateCameraVectors();
 }
 void Camera::updateCameraVectors() {
-  vivaphysics::euler_angles angles = transform.rot.to_euler();
-  basis.from_euler(angles, worldUp);
+  vivaphysics::euler_angles eangles = transform.rot.to_euler();
+  basis.from_euler(eangles);
 }
 void Camera::processKeyboard(MOVE_DIRECTION direction, float deltaTime) {
   float velocity = movementSpeed * deltaTime;
