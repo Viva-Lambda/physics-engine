@@ -7,16 +7,6 @@ using namespace vivademos;
 
 namespace vivademos {
 
-struct Ray {
-  glm::vec3 origin;
-  glm::vec3 direction;
-};
-struct Segment {
-  glm::vec3 origin;
-  glm::vec3 direction;
-  float size;
-};
-
 // default values for the camera
 const float YAW = -90.0f;
 const float PITCH = 0.0f;

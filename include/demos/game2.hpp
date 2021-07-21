@@ -202,18 +202,25 @@ template <> struct GameManager<Game2> {
 
     // set model matrix
     glm::mat4 model = glm::mat4(1.0f);
+    Shader s = game.shaders[0];
+    glm::vec3 startpos(0.0f);
+    glm::vec3 color = glm::vec3(1);
 
     // redraw meshes
     for (unsigned int i = 0; i < game.shapes.size(); i++) {
       Mesh m = game.shapes[i];
-      Shader s = game.shaders[i];
       gerr();
+      startpos.z += static_cast<float>(i * 2);
+
+      glm::mat4 nmodel = glm::translate(model, startpos);
 
       s.useProgram();
-      s.setMat4Uni("model", model);
+      s.setMat4Uni("model", nmodel);
       gerr();
+      color *= 0.5f;
 
       s.setMat4Uni("view", view);
+      s.setVec3Uni("diffColor", color);
       s.setMat4Uni("projection", projection);
 
       m.draw(s);
@@ -246,7 +253,11 @@ template <> struct GameManager<Game2> {
     // set up mesh data
     game.mname = "1";
     Mesh m1 = SimpleTriangleMesh();
+    Mesh m2 = SimpleCubeMesh();
+    Mesh m3 = SimpleTriangleMesh();
     game.shapes.push_back(m1);
+    game.shapes.push_back(m2);
+    game.shapes.push_back(m3);
 
     // set up shader data
     Shader obj_shader = mk_simple_mesh_shader2();

@@ -11,5 +11,5 @@ out vec4 FragColor;
 uniform vec3 diffColor; // update
 
 void main(){
-    FragColor = vec4(1);
+    FragColor = vec4(diffColor,1);
 }
