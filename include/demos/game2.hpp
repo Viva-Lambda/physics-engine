@@ -2,6 +2,7 @@
 // basic skeleton for showing demos of our physics engine
 #include <demos/camera.hpp>
 #include <demos/gamemanager.hpp>
+#include <demos/gameobj.hpp>
 #include <demos/light.hpp>
 #include <demos/mesh.hpp>
 #include <demos/shader.hpp>
@@ -11,11 +12,51 @@
 using namespace vivademos;
 
 namespace vivademos {
+
+std::vector<TransformableMesh> mk_game2_mesh_obj() {
+  std::vector<TransformableMesh> g2obj;
+  Mesh m1 = SimpleTriangleMesh();
+  Mesh m2 = SimpleCubeMesh();
+  Mesh m3 = SimpleTriangleMesh();
+  Mesh m4 = SimpleQuatMesh();
+
+  std::vector<Mesh> ms;
+  ms.push_back(m1);
+  ms.push_back(m2);
+  ms.push_back(m3);
+  ms.push_back(m4);
+
+  std::vector<Transformable> ts;
+
+  glm::vec3 startpos(0.0f);
+  unsigned int i = 0;
+  for (i = 0; i < 4; i++) {
+    vivaphysics::real p = static_cast<vivaphysics::real>(i * 3);
+    startpos.z += static_cast<float>(p);
+
+    Rotatable r = Rotatable::fromEulerAngles(0, 0, p);
+
+    Translatable tr = Translatable(vivaphysics::v3(startpos));
+
+    Transformable t = Transformable(tr, r);
+
+    ts.push_back(t);
+  }
+
+  std::vector<TransformableMesh> tms;
+
+  for (i = 0; i < 4; i++) {
+    TransformableMesh t(ms[i], ts[i]);
+    tms.push_back(t);
+  }
+  return tms;
+}
+
 struct Game2 {
   GLFWwindow *window;
-  std::vector<Mesh> shapes;
+  std::vector<TransformableMesh> shapes;
   std::vector<Shader> shaders;
-  Camera cam;
+  SimpleCamera cam;
   PointLight light;
   vivaphysics::real last_time;
 
@@ -208,11 +249,10 @@ template <> struct GameManager<Game2> {
 
     // redraw meshes
     for (unsigned int i = 0; i < game.shapes.size(); i++) {
-      Mesh m = game.shapes[i];
+      TransformableMesh m = game.shapes[i];
       gerr();
-      startpos.z += static_cast<float>(i * 2);
 
-      glm::mat4 nmodel = glm::translate(model, startpos);
+      glm::mat4 nmodel = m.model();
 
       s.useProgram();
       s.setMat4Uni("model", nmodel);
@@ -252,12 +292,10 @@ template <> struct GameManager<Game2> {
   static void start(Game2 &game) {
     // set up mesh data
     game.mname = "1";
-    Mesh m1 = SimpleTriangleMesh();
-    Mesh m2 = SimpleCubeMesh();
-    Mesh m3 = SimpleTriangleMesh();
-    game.shapes.push_back(m1);
-    game.shapes.push_back(m2);
-    game.shapes.push_back(m3);
+    auto tms = mk_game2_mesh_obj();
+    for (const auto &tm : tms) {
+      game.shapes.push_back(tm);
+    }
 
     // set up shader data
     Shader obj_shader = mk_simple_mesh_shader2();
@@ -267,7 +305,7 @@ template <> struct GameManager<Game2> {
     game.shaders.push_back(obj_shader);
 
     // set up camera
-    game.cam = Camera(glm::vec3(0.0f, 0.0f, 10.0f));
+    game.cam = SimpleCamera(glm::vec3(0.0f, 0.0f, 10.0f));
 
     game.cam.set_near(0.1);
     game.cam.set_far(1000.0);

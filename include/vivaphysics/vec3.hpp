@@ -27,9 +27,7 @@ public:
   v3(glm::vec3 v) : glm::vec3(v.x, v.y, v.z) {}
   glm::vec3 to_glm() const { return glm::vec3(x, y, z); }
   /**operators*/
-  v3 operator+(const v3 &v) const {
-    return v3(to_glm() + v.to_glm());
-  }
+  v3 operator+(const v3 &v) const { return v3(to_glm() + v.to_glm()); }
   v3 operator+(real v) const { return v3(to_glm() + v); }
 
   void operator+=(const v3 &v) {
@@ -41,9 +39,7 @@ public:
     *this = v3(a);
   }
 
-  v3 operator-(const v3 &v) const {
-    return v3(to_glm() - v.to_glm());
-  }
+  v3 operator-(const v3 &v) const { return v3(to_glm() - v.to_glm()); }
   v3 operator-(real v) const { return v3(to_glm() - v); }
 
   void operator-=(const v3 &v) {
@@ -55,9 +51,7 @@ public:
     *this = v3(a);
   }
 
-  v3 operator*(const v3 &v) const {
-    return v3(to_glm() * v.to_glm());
-  }
+  v3 operator*(const v3 &v) const { return v3(to_glm() * v.to_glm()); }
   v3 operator*(real v) const { return v3(to_glm() * v); }
 
   void operator*=(const v3 &v) {
@@ -72,12 +66,9 @@ public:
   v3 cross_product(const v3 &v) const {
     return v3(glm::cross(to_glm(), v.to_glm()));
   }
-  v3 vector_product(const v3 &v) const {
-    return cross_product(v);
-  }
+  v3 vector_product(const v3 &v) const { return cross_product(v); }
   real dot(const v3 &v) const {
-    return static_cast<real>(
-        glm::dot(to_glm(), v.to_glm()));
+    return static_cast<real>(glm::dot(to_glm(), v.to_glm()));
   }
   real inner_product(const v3 &v) const { return dot(v); }
   real scalar_product(const v3 &v) const { return dot(v); }
@@ -94,15 +85,11 @@ public:
   void invert() { *this = v3(to_glm() * -1.0f); }
 
   /** magnitude/size of vector*/
-  real magnitude() const {
-    return static_cast<real>(glm::length(to_glm()));
-  }
+  real magnitude() const { return static_cast<real>(glm::length(to_glm())); }
   real length() const { return magnitude(); }
 
   /***/
-  real square_magnitude() const {
-    return magnitude() * magnitude();
-  }
+  real square_magnitude() const { return magnitude() * magnitude(); }
   v3 normalized() const {
     real size = magnitude();
     if (size > 0) {
@@ -141,8 +128,7 @@ const v3 v3::Z = v3(0, 0, 1);
 typedef v3 point3;
 typedef v3 color;
 
-void make_orthonormal_basis(const v3 &a, const v3 &b,
-                            v3 out[3]) {
+void make_orthonormal_basis(const v3 &a, const v3 &b, v3 out[3]) {
   auto anorm = a.normalized();
 
   out[0] = anorm;
@@ -154,4 +140,4 @@ void make_orthonormal_basis(const v3 &a, const v3 &b,
   out[1] = cnorm;
   out[2] = cnorm.cross_product(anorm);
 }
-};
+}; // namespace vivaphysics
