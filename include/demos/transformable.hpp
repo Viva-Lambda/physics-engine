@@ -64,7 +64,7 @@ struct Translatable {
   void set_position(const vivaphysics::v3 &p) { position = p; }
   glm::mat4 translate(const glm::mat4 &transMat) const {
     if (trans_check) {
-      auto nmat = glm::translate(transMat, position);
+      auto nmat = glm::translate(transMat, position.to_glm());
       return nmat;
     } else {
       throw std::runtime_error("position has not been initialized");
@@ -95,9 +95,9 @@ struct Rotatable {
     auto scast = static_cast<real>(2.0);
     auto q_r = std::cos(rad / scast);
     auto sin_theta = std::sin(rad / scast);
-    auto q_i = unit.x * sin_theta;
-    auto q_j = unit.y * sin_theta;
-    auto q_k = unit.z * sin_theta;
+    auto q_i = unit.x() * sin_theta;
+    auto q_j = unit.y() * sin_theta;
+    auto q_k = unit.z() * sin_theta;
     return Rotatable(q_r, q_i, q_j, q_k);
   }
   static Rotatable fromEulerAngles(real yaw, real pitch, real roll) {

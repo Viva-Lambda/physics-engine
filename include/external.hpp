@@ -27,8 +27,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 // glut
 // #include <GL/glut.h>
 // thirdparty math
 #include <thirdparty/quaternion.hpp>
+#include <thirdparty/vepp.hpp>

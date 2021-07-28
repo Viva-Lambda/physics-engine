@@ -59,11 +59,12 @@ public:
     vivaphysics::euler_angles angles = rot.to_euler();
     vivaphysics::real yaw = angles.yaw();
     vivaphysics::real pitch = angles.pitch();
-    vivaphysics::v3 front;
+    glm::vec3 front;
     front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
     front.y = sin(glm::radians(pitch));
     front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    basis.from_w(front);
+    vivaphysics::v3 f(front);
+    basis.from_w(f);
   }
   void processKeyBoardRotate(ROTATE_DIRECTION direction,
                              vivaphysics::real deltaTime) {

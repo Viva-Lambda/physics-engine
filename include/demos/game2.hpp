@@ -14,13 +14,14 @@ using namespace vivademos;
 namespace vivademos {
 
 std::vector<TransformableMesh> mk_game2_mesh_obj() {
-  std::vector<TransformableMesh> g2obj;
-  Mesh m1 = SimpleTriangleMesh();
+  Mesh m0 = SimpleCubeMesh();
+  Mesh m1 = SimpleCubeMesh();
   Mesh m2 = SimpleCubeMesh();
   Mesh m3 = SimpleTriangleMesh();
   Mesh m4 = SimpleQuatMesh();
 
   std::vector<Mesh> ms;
+  ms.push_back(m0);
   ms.push_back(m1);
   ms.push_back(m2);
   ms.push_back(m3);
@@ -30,11 +31,11 @@ std::vector<TransformableMesh> mk_game2_mesh_obj() {
 
   glm::vec3 startpos(0.0f);
   unsigned int i = 0;
-  for (i = 0; i < 4; i++) {
-    vivaphysics::real p = static_cast<vivaphysics::real>(i * 3);
+  for (i = 0; i < 5; i++) {
+    vivaphysics::real p = static_cast<vivaphysics::real>(i * 1);
     startpos.z += static_cast<float>(p);
 
-    Rotatable r = Rotatable::fromEulerAngles(0, 0, p);
+    Rotatable r = Rotatable::fromEulerAngles(0, p, 0);
 
     Translatable tr = Translatable(vivaphysics::v3(startpos));
 
@@ -45,7 +46,7 @@ std::vector<TransformableMesh> mk_game2_mesh_obj() {
 
   std::vector<TransformableMesh> tms;
 
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < 5; i++) {
     TransformableMesh t(ms[i], ts[i]);
     tms.push_back(t);
   }
@@ -143,19 +144,20 @@ struct Game2 {
     }
     if ((glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)) {
-      cam.processKeyboardRotate(ROTATE_DIRECTION::RIGHT, delta);
+      //
+      cam.processKeyboardRotate(ROTATE_DIRECTION::RIGHT, 0.1);
     }
     if ((glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)) {
-      cam.processKeyboardRotate(ROTATE_DIRECTION::LEFT, delta);
+      cam.processKeyboardRotate(ROTATE_DIRECTION::LEFT, 0.1);
     }
     if ((glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)) {
-      cam.processKeyboardRotate(ROTATE_DIRECTION::FORWARD, delta);
+      cam.processKeyboardRotate(ROTATE_DIRECTION::FORWARD, 0.1);
     }
     if ((glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)) {
-      cam.processKeyboardRotate(ROTATE_DIRECTION::BACKWARD, delta);
+      cam.processKeyboardRotate(ROTATE_DIRECTION::BACKWARD, 0.1);
     }
   }
   void moveLight() {
@@ -293,6 +295,7 @@ template <> struct GameManager<Game2> {
     // set up mesh data
     game.mname = "1";
     auto tms = mk_game2_mesh_obj();
+    game.shapes.clear();
     for (const auto &tm : tms) {
       game.shapes.push_back(tm);
     }

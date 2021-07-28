@@ -19,12 +19,10 @@ public:
   /** Taking variable names from Vince 2011 p. 53 */
   //
   q4() : quat::quaternion<real>() {}
-  q4(real x, real y, real z, real w)
-      : quat::quaternion<real>(x, y, z, w) {}
+  q4(real x, real y, real z, real w) : quat::quaternion<real>(x, y, z, w) {}
   q4(real _r, const v3 &_v)
-      : quat::quaternion<real>(_r, _v.x, _v.y, _v.z) {}
-  q4(real _r, const quat::quat_c<real> &bi,
-     const quat::quat_c<real> &cj,
+      : quat::quaternion<real>(_r, _v.x(), _v.y(), _v.z()) {}
+  q4(real _r, const quat::quat_c<real> &bi, const quat::quat_c<real> &cj,
      const quat::quat_c<real> &dk)
       : quat::quaternion<real>(_r, bi, cj, dk) {}
 
@@ -42,4 +40,4 @@ public:
     return v;
   }
 };
-};
+}; // namespace vivaphysics

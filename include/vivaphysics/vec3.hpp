@@ -6,61 +6,87 @@
 
 using namespace vivaphysics;
 
+// n dimensional vector lib
+
 namespace vivaphysics {
 
-class v3 : public glm::vec3 {
+class v3 {
+  vepp::VecN<real, 3> vdata;
+
+  // private methods
+
+  real get(unsigned int i) const {
+    real v = static_cast<real>(0);
+    vdata.get(i, v);
+    return v;
+  }
   // static methods
 public:
-  const static v3 GRAVITY;
-  const static v3 HIGH_GRAVITY;
-  const static v3 UP;
-  const static v3 RIGHT;
-  const static v3 OUT_OF_SCREEN;
-  const static v3 X;
-  const static v3 Y;
-  const static v3 Z;
+  static const v3 GRAVITY;
+  static const v3 HIGH_GRAVITY;
+  static const v3 UP;
+  static const v3 RIGHT;
+  static const v3 OUT_OF_SCREEN;
+  static const v3 X;
+  static const v3 Y;
+  static const v3 Z;
 
 public:
-  v3() : glm::vec3() {}
-  v3(real v) : glm::vec3(v) {}
-  v3(real r, real g, real b) : glm::vec3(r, g, b) {}
-  v3(glm::vec3 v) : glm::vec3(v.x, v.y, v.z) {}
-  glm::vec3 to_glm() const { return glm::vec3(x, y, z); }
+  v3() {}
+  v3(real v) : vdata(v) {}
+  v3(real r, real g, real b) : vdata(std::array<real, 3>({r, g, b})) {}
+  v3(glm::vec3 v) : vdata(std::array<real, 3>({v.x, v.y, v.z})) {}
+  real x() const { return get(0); }
+  real y() const { return get(1); }
+  real z() const { return get(2); }
+  glm::vec3 to_glm() const { return glm::vec3(x(), y(), z()); }
   /**operators*/
+  bool operator==(const v3 &v) const {
+    if (to_glm() == v.to_glm())
+      return true;
+    return false;
+  }
+  bool operator!=(const v3 &v) const { return !(*this == v); }
   v3 operator+(const v3 &v) const { return v3(to_glm() + v.to_glm()); }
   v3 operator+(real v) const { return v3(to_glm() + v); }
 
-  void operator+=(const v3 &v) {
+  v3 &operator+=(const v3 &v) {
     auto a = to_glm() + v.to_glm();
     *this = v3(a);
+    return *this;
   }
-  void operator+=(real v) {
+  v3 &operator+=(real v) {
     auto a = to_glm() + v;
     *this = v3(a);
+    return *this;
   }
 
   v3 operator-(const v3 &v) const { return v3(to_glm() - v.to_glm()); }
   v3 operator-(real v) const { return v3(to_glm() - v); }
 
-  void operator-=(const v3 &v) {
+  v3 &operator-=(const v3 &v) {
     auto a = to_glm() - v.to_glm();
     *this = v3(a);
+    return *this;
   }
-  void operator-=(real v) {
+  v3 &operator-=(real v) {
     auto a = to_glm() - v;
     *this = v3(a);
+    return *this;
   }
 
   v3 operator*(const v3 &v) const { return v3(to_glm() * v.to_glm()); }
   v3 operator*(real v) const { return v3(to_glm() * v); }
 
-  void operator*=(const v3 &v) {
+  v3 &operator*=(const v3 &v) {
     auto a = to_glm() * v.to_glm();
     *this = v3(a);
+    return *this;
   }
-  void operator*=(real v) {
+  v3 &operator*=(real v) {
     auto a = to_glm() * v;
     *this = v3(a);
+    return *this;
   }
 
   v3 cross_product(const v3 &v) const {
