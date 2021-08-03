@@ -1,5 +1,6 @@
 #pragma once
 // camera object
+#include "vivaphysics/eulerangle.hpp"
 #include <demos/transformable.hpp>
 #include <external.hpp>
 
@@ -10,7 +11,7 @@ namespace vivademos {
 // default values for the camera
 const vivaphysics::real YAW = -90.0f;
 const vivaphysics::real PITCH = 0.0f;
-const vivaphysics::real SPEED = 2.5f;
+const vivaphysics::real SPEED = 1.2f;
 const vivaphysics::real SENSITIVITY = 0.00001f;
 const vivaphysics::real ZOOM = 45.0f;
 
@@ -79,7 +80,10 @@ public:
   // TODO refactor components into a hash table
 
   vivaphysics::v3 m_pos;
-  vivaphysics::v3 m_dir;
+  vivaphysics::v3 m_front;
+  vivaphysics::v3 m_right;
+  vivaphysics::v3 m_up;
+  //
   vivaphysics::v3 worldUp;
 
   // matrices
@@ -90,6 +94,8 @@ public:
   vivaphysics::real movementSpeed;
   vivaphysics::real mouseSensitivity;
   vivaphysics::real zoom;
+  //
+  vivaphysics::euler_angles angles;
 
   vivaphysics::real near;
   vivaphysics::real far;
@@ -103,7 +109,8 @@ public:
                vivaphysics::real Speed = SPEED,
                vivaphysics::real Sens = SENSITIVITY)
       : m_pos(Position), worldUp(Up), zoom(Zoom), mouseSensitivity(Sens),
-        movementSpeed(Speed), m_dir(Front) {
+        movementSpeed(Speed), m_front(Front), angles(0.0, Yaw, Pitch),
+        near(0.1), far(1000) {
     updateCameraVectors();
   }
 
@@ -117,91 +124,83 @@ public:
                vivaphysics::real Sens = SENSITIVITY,
                vivaphysics::real Zoom = ZOOM)
       : m_pos(posX, posY, posZ), worldUp(upX, upY, upZ), zoom(Zoom),
-        mouseSensitivity(Sens), movementSpeed(Speed), m_dir(Front) {
+        mouseSensitivity(Sens), movementSpeed(Speed), m_front(Front),
+        angles(0.0, Yaw, Pitch), near(0.1), far(1000) {
     updateCameraVectors();
   }
   void processKeyboardRotate(ROTATE_DIRECTION direction,
                              vivaphysics::real deltaTime) {
     vivaphysics::real velocity = movementSpeed * deltaTime;
 
-    vivaphysics::v3 xm(1, 0, 0);
-    vivaphysics::v3 ym(0, 1, 0);
-    vivaphysics::v3 zm(0, 0, 1);
-    real angle_dir = velocity;
-
-    auto cdir = glm::vec3(1);
     // vivaphysics::real velocity = 0.1;
+    auto pitch = angles.pitch();
+    auto yaw = angles.yaw();
+    auto roll = angles.roll();
     switch (direction) {
     case ROTATE_DIRECTION::FORWARD: {
-      cdir = zm.to_glm();
+      pitch += velocity;
       break;
     }
     case ROTATE_DIRECTION::BACKWARD: {
-      cdir = zm.to_glm();
-      angle_dir *= -1;
+      pitch -= velocity;
       break;
     }
     case ROTATE_DIRECTION::LEFT: {
-      cdir = ym.to_glm();
-      angle_dir *= -1;
+      yaw -= velocity;
       break;
     }
     case ROTATE_DIRECTION::RIGHT: {
-      cdir = ym.to_glm();
+      yaw += velocity;
       break;
     }
     case ROTATE_DIRECTION::ROTATE_X: {
-      cdir = xm.to_glm();
+      roll += velocity;
       break;
     }
     case ROTATE_DIRECTION::ROTATE_Y: {
-      cdir = ym.to_glm();
+      yaw += velocity;
       break;
     }
     case ROTATE_DIRECTION::ROTATE_Z: {
-      cdir = zm.to_glm();
+      pitch += velocity;
       break;
     }
     case ROTATE_DIRECTION::U_AXIS: {
-      cdir = zm.to_glm();
+      pitch += velocity;
       break;
     }
     }
-    auto axis = vivaphysics::v3(cdir);
-    rotate(angle_dir, axis);
-
+    angles.set_pitch(pitch);
+    angles.set_yaw(yaw);
     updateCameraVectors();
   }
   void processKeyboard(MOVE_DIRECTION direction, vivaphysics::real deltaTime) {
     //
     vivaphysics::real dtime = movementSpeed * deltaTime;
-    vivaphysics::v3 xm(1, 0, 0);
-    vivaphysics::v3 ym(0, 1, 0);
-    vivaphysics::v3 zm(0, 0, 1);
     auto cdir = glm::vec3(1);
     switch (direction) {
     case MOVE_DIRECTION::LEFT: {
-      cdir = xm.to_glm() * dtime * -1.0f;
+      cdir = m_right.to_glm() * dtime * -1.0f;
       break;
     }
     case MOVE_DIRECTION::RIGHT: {
-      cdir = xm.to_glm() * dtime;
+      cdir = m_right.to_glm() * dtime;
       break;
     }
     case MOVE_DIRECTION::DOWN: {
-      cdir = ym.to_glm() * dtime * -1.0f;
+      cdir = m_up.to_glm() * dtime * -1.0f;
       break;
     }
     case MOVE_DIRECTION::UP: {
-      cdir = ym.to_glm() * dtime;
+      cdir = m_up.to_glm() * dtime;
       break;
     }
     case MOVE_DIRECTION::FORWARD: {
-      cdir = zm.to_glm() * dtime * -1.0f;
+      cdir = m_front.to_glm() * dtime;
       break;
     }
     case MOVE_DIRECTION::BACKWARD: {
-      cdir = zm.to_glm() * dtime;
+      cdir = m_front.to_glm() * dtime * -1.0f;
       break;
     }
     }
@@ -210,8 +209,8 @@ public:
   }
   glm::mat4 get_view_matrix() {
     //
-    auto target = m_pos.to_glm() + m_dir.to_glm();
-    auto mat = glm::lookAt(m_pos.to_glm(), target, worldUp.to_glm());
+    auto target = m_pos.to_glm() + m_front.to_glm();
+    auto mat = glm::lookAt(m_pos.to_glm(), target, m_up.to_glm());
     return mat;
   }
   void set_view_matrix() { m_view = get_view_matrix(); }
@@ -250,9 +249,10 @@ public:
   }
 
   void rotate(vivaphysics::real angle, const vivaphysics::v3 &axis) {
-    auto dir =
-        glm::rotate(m_dir.to_glm(), glm::radians(angle * movementSpeed), axis.to_glm());
-    m_dir = vivaphysics::v3(dir);
+    auto dir = glm::rotate(m_front.to_glm(),
+                           glm::radians(angle * movementSpeed), axis.to_glm());
+    m_front = vivaphysics::v3(dir);
+    updateCameraVectors();
   }
   void move(const vivaphysics::v3 &dir) {
     auto pos = m_pos.to_glm();
@@ -277,7 +277,17 @@ private:
   // update camera using euler angles
   void updateCameraVectors() {
 
+    auto yaw = angles.yaw();
+    auto pitch = angles.pitch();
+
     // compute new front
+    glm::vec3 f;
+    f.x = cos(yaw) * cos(pitch);
+    f.y = sin(pitch);
+    f.z = sin(yaw) * cos(pitch);
+    m_front = vivaphysics::v3(f).normalized();
+    m_right = m_front.cross_product(worldUp).normalized();
+    m_up = m_right.cross_product(m_front).normalized();
   }
 }; // namespace vivademos
 

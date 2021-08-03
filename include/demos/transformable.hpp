@@ -187,28 +187,28 @@ struct Rotatable {
     }
     return eangles;
   }
-  void set_euler(vivaphysics::real v, vivaphysics::EULER_ANGLE a) {
+  void set_euler(vivaphysics::real v, vivaphysics::EULER_ANGLE_TYPE a) {
     switch (a) {
-    case vivaphysics::EULER_ANGLE::YAW: {
+    case vivaphysics::EULER_ANGLE_TYPE::YAW: {
       angles.set_yaw(v);
     }
-    case vivaphysics::EULER_ANGLE::ROLL: {
+    case vivaphysics::EULER_ANGLE_TYPE::ROLL: {
       angles.set_roll(v);
     }
-    case vivaphysics::EULER_ANGLE::PITCH: {
+    case vivaphysics::EULER_ANGLE_TYPE::PITCH: {
       angles.set_pitch(v);
     }
     }
     *this = Rotatable::fromEulerAngles(angles);
   }
   void set_yaw(vivaphysics::real nyaw) {
-    set_euler(nyaw, vivaphysics::EULER_ANGLE::YAW);
+    set_euler(nyaw, vivaphysics::EULER_ANGLE_TYPE::YAW);
   }
   void set_pitch(vivaphysics::real np) {
-    set_euler(np, vivaphysics::EULER_ANGLE::PITCH);
+    set_euler(np, vivaphysics::EULER_ANGLE_TYPE::PITCH);
   }
   void set_roll(vivaphysics::real nr) {
-    set_euler(nr, vivaphysics::EULER_ANGLE::ROLL);
+    set_euler(nr, vivaphysics::EULER_ANGLE_TYPE::ROLL);
   }
   void rotate_by_euler(ROTATE_DIRECTION direction, vivaphysics::real deltaTime,
                        vivaphysics::real speed) {
