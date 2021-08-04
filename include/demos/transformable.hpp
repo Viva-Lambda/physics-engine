@@ -62,10 +62,10 @@ struct Translatable {
     move(md, dtime, basis);
   }
   void set_position(const vivaphysics::v3 &p) { position = p; }
-  glm::mat4 translate(const glm::mat4 &transMat) const {
+  glm::mat4 translate() const {
     if (trans_check) {
-      auto nmat = glm::translate(transMat, position.to_glm());
-      return nmat;
+      auto tmat = glm::translate(position.to_glm());
+      return tmat;
     } else {
       throw std::runtime_error("position has not been initialized");
     }
@@ -263,6 +263,24 @@ struct Rotatable {
     *this = Rotatable::fromEulerAngles(eangles);
   }
 
+  /**axis angle representation*/
+  glm::vec4 to_angle_axis() const {
+    //
+    auto q = quat.normalized();
+    auto q_w = q.scalar();
+    auto q_x = q.x();
+    auto q_y = q.y();
+    auto q_z = q.z();
+    vivaphysics::real coeff = std::sqrt(1.0 - q_w * q_w);
+    coeff = coeff < 0.001 ? 0.001 : coeff;
+    vivaphysics::real angle = 2.0 * std::acos(q_w);
+    vivaphysics::real x = q_x / coeff;
+    vivaphysics::real y = q_y / coeff;
+    vivaphysics::real z = q_z / coeff;
+    glm::vec4 v(x, y, z, angle);
+    return v;
+  }
+
   /**to rotation matrix
     from wikipedia
 
@@ -310,9 +328,9 @@ struct Rotatable {
   glm::mat4 rotate(const glm::mat4 &model) const {
     //
     if (rot_check) {
-      glm::mat3 m = to_mat();
-      glm::mat4 mat(m);
-      return mat * model;
+      auto m = to_mat();
+      glm::mat4 mat = model * glm::mat4(m);
+      return mat;
     } else {
       throw std::runtime_error("rotation values are not initialized");
     }
@@ -326,7 +344,8 @@ struct Scalable {
   void set_scale(const vivaphysics::v3 &cs) { coeffs = cs; }
   glm::mat4 scale(const glm::mat4 &m) const {
     if (scale_check) {
-      auto scaled_matrix = glm::scale(m, coeffs.to_glm());
+      auto smat = glm::scale(coeffs.to_glm());
+      auto scaled_matrix = m * smat;
       return scaled_matrix;
     } else {
       throw std::runtime_error("scale coefficients are not initialized");
@@ -386,14 +405,14 @@ struct Transformable {
    Obtain model matrix of the transformable object*/
   glm::mat4 model() {
     auto m = glm::mat4(1.0f);
-    if (sc.scale_check) {
-      m = sc.scale(m);
+    if (trans.trans_check) {
+      m = trans.translate();
     }
     if (rot.rot_check) {
       m = rot.rotate(m);
     }
-    if (trans.trans_check) {
-      m = trans.translate(m);
+    if (sc.scale_check) {
+      m = sc.scale(m);
     }
     return m;
   }

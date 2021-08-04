@@ -47,18 +47,19 @@ std::vector<TransformableMesh> mk_game2_mesh_obj() {
   std::vector<TransformableMesh> tms;
 
   for (i = 0; i < 5; i++) {
-    TransformableMesh t(ms[i], ts[i]);
+    TransformableMesh t(
+        ms[i], ts[i], vivaphysics::v3(static_cast<vivaphysics::real>(i) / 5.0));
     tms.push_back(t);
   }
   // change quat
   tms[4].transform.sc.scale_check = true;
-  tms[4].transform.sc.set_scale(vivaphysics::v3(2, 2, 0));
+  tms[4].transform.sc.set_scale(vivaphysics::v3(10, 10, 0));
   glm::mat4 m = glm::mat4(1.0f);
-  m = glm::rotate(m, glm::radians(60.0f), glm::vec3(1.0, 0.0, 0.0));
+  m = glm::rotate(m, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
   glm::mat3 mat(m);
   tms[4].transform.rot = Rotatable::fromRotationMatrix(mat);
-  std::cout << tms[4].transform.trans.position << std::endl;
-  tms[4].transform.trans.set_position(vivaphysics::v3(0, 0, 0));
+  tms[4].transform.trans.set_position(vivaphysics::v3(0, -1.0, 0));
+  tms[4].m_color = vivaphysics::v3(0.3, 0.5, 0.3);
   return tms;
 }
 struct Game2 {
@@ -267,10 +268,9 @@ template <> struct GameManager<Game2> {
       s.useProgram();
       s.setMat4Uni("model", nmodel);
       gerr();
-      color *= 0.5f;
 
       s.setMat4Uni("view", view);
-      s.setVec3Uni("diffColor", color);
+      s.setVec3Uni("diffColor", m.color());
       s.setMat4Uni("projection", projection);
 
       m.draw(s);

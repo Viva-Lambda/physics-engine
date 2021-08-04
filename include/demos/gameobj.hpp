@@ -10,9 +10,14 @@ namespace vivademos {
 struct TransformableMesh {
   Mesh shape;
   Transformable transform;
+  vivaphysics::v3 m_color;
   //
   TransformableMesh(const Mesh &s, const Transformable &t)
-      : shape(s), transform(t) {}
+      : shape(s), transform(t), m_color(1.0) {}
+
+  TransformableMesh(const Mesh &s, const Transformable &t,
+                    const vivaphysics::v3 &c)
+      : shape(s), transform(t), m_color(c) {}
 
   void move(MOVE_DIRECTION md, real dtime, const onb &basis) {
     transform.trans.move(md, dtime, basis);
@@ -26,6 +31,7 @@ struct TransformableMesh {
   }
   glm::mat4 model() { return transform.model(); }
   void draw(Shader shdr) { shape.draw(shdr); }
+  glm::vec3 color() const { return m_color.to_glm(); }
 };
 
 }; // namespace vivademos
