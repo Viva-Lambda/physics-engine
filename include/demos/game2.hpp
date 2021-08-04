@@ -50,9 +50,17 @@ std::vector<TransformableMesh> mk_game2_mesh_obj() {
     TransformableMesh t(ms[i], ts[i]);
     tms.push_back(t);
   }
+  // change quat
+  tms[4].transform.sc.scale_check = true;
+  tms[4].transform.sc.set_scale(vivaphysics::v3(2, 2, 0));
+  glm::mat4 m = glm::mat4(1.0f);
+  m = glm::rotate(m, glm::radians(60.0f), glm::vec3(1.0, 0.0, 0.0));
+  glm::mat3 mat(m);
+  tms[4].transform.rot = Rotatable::fromRotationMatrix(mat);
+  std::cout << tms[4].transform.trans.position << std::endl;
+  tms[4].transform.trans.set_position(vivaphysics::v3(0, 0, 0));
   return tms;
 }
-
 struct Game2 {
   GLFWwindow *window;
   std::vector<TransformableMesh> shapes;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <external.hpp>
+#include <ostream>
 #include <vivaphysics/debug.hpp>
 #include <vivaphysics/precision.hpp>
 
@@ -140,7 +141,14 @@ public:
   }
   void trim(real size) { *this = trimmed(size); }
   void clear() { *this = v3(0.0f); }
+
+  friend std::ostream &operator<<(std::ostream &out, const v3 &v);
 };
+
+std::ostream &operator<<(std::ostream &out, const v3 &v) {
+  out << v.x() << " " << v.y() << " " << v.z();
+  return out;
+}
 
 const v3 v3::GRAVITY = v3(0, -9.81, 0);
 const v3 v3::HIGH_GRAVITY = v3(0, -20.62, 0);

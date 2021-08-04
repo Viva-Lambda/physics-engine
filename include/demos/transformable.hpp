@@ -142,10 +142,17 @@ struct Rotatable {
     rot.has_roll = true;
     return rot;
   }
-
   static Rotatable fromEulerAngles(const vivaphysics::euler_angles &angles) {
     //
     return fromEulerAngles(angles.yaw(), angles.pitch(), angles.roll());
+  }
+  static Rotatable fromRotationMatrix(const glm::mat3 &m) {
+    auto q_r = 0.5 * std::sqrt(1.0 + m[0].x + m[1].y + m[2].z);
+    auto q4_r = 1.0 / (4.0 * q_r);
+    auto q_i = q4_r * (m[2].y - m[1].z);
+    auto q_j = q4_r * (m[0].z - m[2].x);
+    auto q_k = q4_r * (m[1].x - m[0].y);
+    return Rotatable(q_r, q_i, q_j, q_k);
   }
   vivaphysics::euler_angles to_euler() const {
     // declare euler angles
@@ -216,39 +223,107 @@ struct Rotatable {
     euler_angles eangles = to_euler();
     vivaphysics::real yaw = eangles.yaw();
     vivaphysics::real pitch = eangles.pitch();
-    if (direction == ROTATE_DIRECTION::FORWARD) {
+    vivaphysics::real roll = eangles.roll();
+    switch (direction) {
+
+    case ROTATE_DIRECTION::FORWARD: {
       pitch += deltaTime;
-    } else if (direction == ROTATE_DIRECTION::BACKWARD) {
+      break;
+    }
+    case ROTATE_DIRECTION::BACKWARD: {
       pitch -= deltaTime;
-    } else if (direction == ROTATE_DIRECTION::LEFT) {
+      break;
+    }
+    case ROTATE_DIRECTION::LEFT: {
       yaw -= deltaTime;
-    } else if (direction == ROTATE_DIRECTION::RIGHT) {
+      break;
+    }
+    case ROTATE_DIRECTION::RIGHT: {
       yaw += deltaTime;
-    } else {
-      throw std::runtime_error("rotate by euler accepts only forward,backward, "
-                               "left, right rotation directions");
+      break;
+    }
+    case ROTATE_DIRECTION::ROTATE_X: {
+      roll += deltaTime;
+    }
+    case ROTATE_DIRECTION::ROTATE_Y: {
+      yaw += deltaTime;
+    }
+    case ROTATE_DIRECTION::ROTATE_Z: {
+      pitch += deltaTime;
+    }
+    case ROTATE_DIRECTION::U_AXIS: {
+      pitch += deltaTime;
+      yaw += deltaTime;
+      roll += deltaTime;
+    }
     }
     eangles.set_yaw(yaw);
     eangles.set_pitch(pitch);
+    eangles.set_roll(roll);
     *this = Rotatable::fromEulerAngles(eangles);
+  }
+
+  /**to rotation matrix
+    from wikipedia
+
+    A = [
+        ((1 − 2*q_j^2 − 2*q_k^2), 2(q_i*q_j − q_k*q_r), 2(q_i*q_k + q_j*q_r)),
+        (2(q_i*q_j + q_k*q_r), (1 − 2*q_i^2 − 2*q_k^2), 2(q_j*q_k − q_i*q_r))
+        (2(q_i*q_k − q_j*q_r), 2(q_j*q_k + q_i*q_r), (1 − 2*q_i^2 − 2*q_j^2))
+        ]
+   */
+  glm::mat3 to_mat() const {
+    //
+    auto q_r = quat.scalar();
+    auto q_i = quat.x();
+    auto q_j = quat.y();
+    auto q_k = quat.z();
+    //
+    auto r1_x = 1.0 - 2.0 * (q_j * q_j) - 2.0 * (q_k * q_k);
+    auto r1_y = 2.0 * (q_i * q_j - q_k * q_r);
+    auto r1_z = 2.0 * (q_i * q_k + q_j * q_r);
+    //
+    auto r2_x = 2 * (q_i * q_j + q_k * q_r);
+    auto r2_y = 1.0 - 2.0 * (q_i * q_i) - 2.0 * (q_k * q_k);
+    auto r2_z = 2.0 * (q_j * q_k - q_i * q_r);
+    //
+    auto r3_x = 2.0 * (q_i * q_k - q_j * q_r);
+    auto r3_y = 2.0 * (q_j * q_k + q_i * q_r);
+    auto r3_z = 1.0 - 2.0 * (q_i * q_i) - 2.0 * (q_j * q_j);
+    //
+    glm::mat3 m(1.0);
+    //
+    m[0].x = r1_x;
+    m[0].y = r2_x;
+    m[0].z = r3_x;
+    //
+    m[1].x = r1_y;
+    m[1].y = r2_y;
+    m[1].z = r3_y;
+    //
+    m[2].x = r1_z;
+    m[2].y = r2_z;
+    m[2].z = r3_z;
+    //
+    return m;
   }
   glm::mat4 rotate(const glm::mat4 &model) const {
     //
     if (rot_check) {
-      auto axis_normal = quat.vector().normalized();
-      auto angle = static_cast<real>(2 * std::acos(quat.scalar()));
-      auto rot = glm::rotate(model, angle, axis_normal.to_glm());
-      return rot;
+      glm::mat3 m = to_mat();
+      glm::mat4 mat(m);
+      return mat * model;
     } else {
       throw std::runtime_error("rotation values are not initialized");
     }
   }
-};
+}; // namespace vivademos
 struct Scalable {
   vivaphysics::v3 coeffs;
   bool scale_check = false;
   Scalable() : scale_check(false) {}
   Scalable(const vivaphysics::v3 &cs) : coeffs(cs), scale_check(true) {}
+  void set_scale(const vivaphysics::v3 &cs) { coeffs = cs; }
   glm::mat4 scale(const glm::mat4 &m) const {
     if (scale_check) {
       auto scaled_matrix = glm::scale(m, coeffs.to_glm());
@@ -311,14 +386,14 @@ struct Transformable {
    Obtain model matrix of the transformable object*/
   glm::mat4 model() {
     auto m = glm::mat4(1.0f);
-    if (trans.trans_check) {
-      m = trans.translate(m);
+    if (sc.scale_check) {
+      m = sc.scale(m);
     }
     if (rot.rot_check) {
       m = rot.rotate(m);
     }
-    if (sc.scale_check) {
-      m = sc.scale(m);
+    if (trans.trans_check) {
+      m = trans.translate(m);
     }
     return m;
   }
