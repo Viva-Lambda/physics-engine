@@ -9,7 +9,7 @@ out vec4 FragColor;
 
 uniform float ambientCoeff; // a good value is 0.1
 uniform vec3 attC;          // x=c1, y=c2, z=c3
-uniform float lightIntensity = 1.0;
+uniform vec3 lightColor;
 
 uniform vec3 lightPos; // update
 uniform vec3 diffColor; // update
@@ -48,7 +48,7 @@ void main() {
   // attenuation term f_att
   // f_att = min(\frac{1}{c_1 + c_2{\times}d_L + c_3{\times}d^2_{L}} , 1)
   float attenuation = computeAttenuation(attC, lightPos, FragPos);
-  vec3 diffuse = attenuation * diffuseColor * lightIntensity;
+  vec3 diffuse = attenuation * diffuseColor * lightColor;
   // adding specular terms
   // specmap
   float gamma = 2.2;

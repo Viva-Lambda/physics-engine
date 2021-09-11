@@ -18,14 +18,14 @@ include_directories(
 
 # for importing modules
 set(AbsPathPrefix 
-    "/media/kaan/Data7510/GitProjects")
+    "/home/kaan/GitProjects")
 
 # glfw
 # find_package(glfw3 REQUIRED)
 add_library(glfwLib SHARED IMPORTED)
 set_target_properties(glfwLib PROPERTIES IMPORTED_LOCATION
-    "${AbsPathPrefix}/glfw/bin/lib/libglfw.so")
-include_directories("${AbsPathPrefix}/glfw/bin/include/")
+    "${AbsPathPrefix}/glfw-3.3.4/bin/lib/libglfw.so")
+include_directories("${AbsPathPrefix}/glfw-3.3.4/bin/include/")
 
 # glut
 #add_library(glutLib SHARED IMPORTED)

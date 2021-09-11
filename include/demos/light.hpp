@@ -83,7 +83,6 @@ protected:
 class PointLight : public Light {
 public:
   Translatable trans;
-  point3 position;
   vivaphysics::real movementSpeed;
 
   PointLight() : Light(vivaphysics::v3(1.0)) {}

@@ -18,7 +18,7 @@ std::vector<TransformableMesh> mk_game2_mesh_obj() {
   Mesh m1 = SimpleCubeMesh();
   Mesh m2 = SimpleCubeMesh();
   Mesh m3 = SimpleTriangleMesh();
-  Mesh m4 = SimpleQuatMesh();
+  Mesh m4 = SimpleQuatMesh(); // platform
 
   std::vector<Mesh> ms;
   ms.push_back(m0);
@@ -65,7 +65,7 @@ std::vector<TransformableMesh> mk_game2_mesh_obj() {
 struct Game2 {
   GLFWwindow *window;
   std::vector<TransformableMesh> shapes;
-  std::vector<Shader> shaders;
+  std::vector<Shader> shaders; //
   SimpleCamera cam;
   PointLight light;
   vivaphysics::real last_time;
@@ -138,7 +138,7 @@ struct Game2 {
   }
   /**move camera using a model matrix*/
   void moveCamera() {
-    auto delta = dtime();
+    auto delta = 0.1f;
     if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)) {
       cam.processKeyboard(MOVE_DIRECTION::FORWARD, delta);
     }
@@ -154,23 +154,23 @@ struct Game2 {
     if ((glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)) {
       //
-      cam.processKeyboardRotate(ROTATE_DIRECTION::RIGHT, 0.1);
+      cam.processKeyboardRotate(ROTATE_DIRECTION::RIGHT, delta);
     }
     if ((glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)) {
-      cam.processKeyboardRotate(ROTATE_DIRECTION::LEFT, 0.1);
+      cam.processKeyboardRotate(ROTATE_DIRECTION::LEFT, delta);
     }
     if ((glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)) {
-      cam.processKeyboardRotate(ROTATE_DIRECTION::FORWARD, 0.1);
+      cam.processKeyboardRotate(ROTATE_DIRECTION::FORWARD, delta);
     }
     if ((glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) &&
         (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)) {
-      cam.processKeyboardRotate(ROTATE_DIRECTION::BACKWARD, 0.1);
+      cam.processKeyboardRotate(ROTATE_DIRECTION::BACKWARD, delta);
     }
   }
   void moveLight() {
-    auto delta = dtime(); //
+    auto delta = 0.1f;
 
     if ((glfwGetKey(window, GLFW_KEY_KP_1) == GLFW_PRESS)) {
       light.processKeyboard(MOVE_DIRECTION::UP, delta);
@@ -254,9 +254,27 @@ template <> struct GameManager<Game2> {
 
     // set model matrix
     glm::mat4 model = glm::mat4(1.0f);
-    Shader s = game.shaders[0];
+    Shader object_shader = game.shaders[0];
+    gerr();
     glm::vec3 startpos(0.0f);
     glm::vec3 color = glm::vec3(1);
+
+    {
+      // draw light
+      Shader light_shader = game.shaders[1];
+      // game.light.trans =
+      // Translatable(vivaphysics::v3(glm::vec3(0.0f,3.0f,0.0)));
+      auto lightModel = game.light.trans.translate();
+      light_shader.useProgram();
+      light_shader.setMat4Uni("model", lightModel);
+      light_shader.setMat4Uni("view", view);
+      light_shader.setMat4Uni("projection", projection);
+      Mesh m5 = SimpleTriangleMesh();
+      Transformable ts = Transformable(game.light.trans);
+      TransformableMesh tmesh = TransformableMesh(m5, ts);
+      tmesh.draw(light_shader);
+      gerr();
+    }
 
     // redraw meshes
     for (unsigned int i = 0; i < game.shapes.size(); i++) {
@@ -265,15 +283,22 @@ template <> struct GameManager<Game2> {
 
       glm::mat4 nmodel = m.model();
 
-      s.useProgram();
-      s.setMat4Uni("model", nmodel);
+      object_shader.useProgram();
+      // setup light values
+      object_shader.setVec3Uni("lightPos", game.light.trans.position.to_glm());
+      object_shader.setVec3Uni("lightColor", game.light.emitColor.to_glm());
+      object_shader.setVec3Uni("attC", glm::vec3(1.0f, 0.1f, 0.01f));
+      object_shader.setFloatUni("ambientCoeff", 0.1f);
+
+      // set object model view projection values
+      object_shader.setMat4Uni("model", nmodel);
       gerr();
 
-      s.setMat4Uni("view", view);
-      s.setVec3Uni("diffColor", m.color());
-      s.setMat4Uni("projection", projection);
+      object_shader.setMat4Uni("view", view);
+      object_shader.setVec3Uni("diffColor", m.color());
+      object_shader.setMat4Uni("projection", projection);
 
-      m.draw(s);
+      m.draw(object_shader);
     }
   }
 
@@ -309,11 +334,20 @@ template <> struct GameManager<Game2> {
     }
 
     // set up shader data
+
+    // set up object shader
     Shader obj_shader = mk_simple_mesh_shader2();
     obj_shader.useProgram();
     obj_shader.setVec3Uni("diffColor", glm::vec3(0.1, 0.1, 0.6));
     gerr();
     game.shaders.push_back(obj_shader);
+
+    // set up light shader
+    Shader light_shader = mk_pointlight_lamp_shader();
+    light_shader.useProgram();
+    light_shader.setVec3Uni("lightColor", glm::vec3(1.0f));
+    gerr();
+    game.shaders.push_back(light_shader);
 
     // set up camera
     game.cam = SimpleCamera(glm::vec3(0.0f, 0.0f, 10.0f));
