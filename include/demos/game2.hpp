@@ -254,10 +254,10 @@ template <> struct GameManager<Game2> {
 
     // set model matrix
     glm::mat4 model = glm::mat4(1.0f);
-    Shader object_shader = game.shaders[0];
-    gerr();
     glm::vec3 startpos(0.0f);
     glm::vec3 color = glm::vec3(1);
+
+    float intensity = 1.0f;
 
     {
       // draw light
@@ -276,6 +276,8 @@ template <> struct GameManager<Game2> {
       gerr();
     }
 
+    Shader object_shader = game.shaders[0];
+    gerr();
     // redraw meshes
     for (unsigned int i = 0; i < game.shapes.size(); i++) {
       TransformableMesh m = game.shapes[i];
@@ -286,10 +288,9 @@ template <> struct GameManager<Game2> {
       object_shader.useProgram();
       // setup light values
       object_shader.setVec3Uni("lightPos", game.light.trans.position.to_glm());
-      object_shader.setVec3Uni("lightColor", game.light.emitColor.to_glm());
-      object_shader.setVec3Uni("attC", glm::vec3(1.0f, 0.1f, 0.01f));
-      object_shader.setFloatUni("ambientCoeff", 0.1f);
-
+      gerr();
+      object_shader.setVec3Uni("viewPos", game.cam.m_pos.to_glm());
+      gerr();
       // set object model view projection values
       object_shader.setMat4Uni("model", nmodel);
       gerr();
@@ -338,7 +339,7 @@ template <> struct GameManager<Game2> {
     // set up object shader
     Shader obj_shader = mk_simple_mesh_shader2();
     obj_shader.useProgram();
-    obj_shader.setVec3Uni("diffColor", glm::vec3(0.1, 0.1, 0.6));
+    obj_shader.setVec3Uni("diffColor", glm::vec3(1.0, 1.0, 1.0));
     gerr();
     game.shaders.push_back(obj_shader);
 
