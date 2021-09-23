@@ -187,7 +187,7 @@ struct Game2 {
     if ((glfwGetKey(window, GLFW_KEY_KP_5) == GLFW_PRESS)) {
       light.processKeyboard(MOVE_DIRECTION::FORWARD, delta);
     }
-    if ((glfwGetKey(window, GLFW_KEY_KP_5) == GLFW_PRESS)) {
+    if ((glfwGetKey(window, GLFW_KEY_KP_6) == GLFW_PRESS)) {
       light.processKeyboard(MOVE_DIRECTION::BACKWARD, delta);
     }
   }
@@ -277,6 +277,16 @@ template <> struct GameManager<Game2> {
     }
 
     Shader object_shader = game.shaders[0];
+    object_shader.useProgram();
+    object_shader.setMat4Uni("view", view);
+    object_shader.setMat4Uni("projection", projection);
+    // setup light values
+    object_shader.setVec3Uni("lightPos", game.light.trans.position.to_glm());
+    gerr();
+
+    object_shader.setVec3Uni("lightColor", game.light.emitColor.to_glm());
+    gerr();
+
     gerr();
     // redraw meshes
     for (unsigned int i = 0; i < game.shapes.size(); i++) {
@@ -284,20 +294,11 @@ template <> struct GameManager<Game2> {
       gerr();
 
       glm::mat4 nmodel = m.model();
-
-      object_shader.useProgram();
-      // setup light values
-      object_shader.setVec3Uni("lightPos", game.light.trans.position.to_glm());
-      gerr();
-      object_shader.setVec3Uni("viewPos", game.cam.m_pos.to_glm());
-      gerr();
       // set object model view projection values
       object_shader.setMat4Uni("model", nmodel);
       gerr();
 
-      object_shader.setMat4Uni("view", view);
       object_shader.setVec3Uni("diffColor", m.color());
-      object_shader.setMat4Uni("projection", projection);
 
       m.draw(object_shader);
     }
@@ -338,9 +339,6 @@ template <> struct GameManager<Game2> {
 
     // set up object shader
     Shader obj_shader = mk_simple_mesh_shader2();
-    obj_shader.useProgram();
-    obj_shader.setVec3Uni("diffColor", glm::vec3(1.0, 1.0, 1.0));
-    gerr();
     game.shaders.push_back(obj_shader);
 
     // set up light shader
@@ -357,8 +355,9 @@ template <> struct GameManager<Game2> {
     game.cam.set_far(1000.0);
 
     // set up light
-    game.light =
-        PointLight(glm::vec3(0.6, 0.6, 1.0f), glm::vec3(0.2f, 1.0f, 0.5f));
+    auto lcolor = glm::vec3(1.0, 1.0, 1.0f);
+    auto lpos = glm::vec3(0.2f, 1.0f, 0.5f);
+    game.light = PointLight(lcolor, lpos);
 
     // set up last time
     game.last_time = static_cast<vivaphysics::real>(glfwGetTime());
