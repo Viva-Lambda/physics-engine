@@ -90,6 +90,15 @@ add_executable(
 #target_link_libraries(final.out AssimpLib)
 target_link_libraries(newarch2.out glfwLib)
 
+# -------- Ballistic Demo ------------------
+
+add_executable(
+    ballistic.out 
+    "src/demos/glad.c"
+    "src/demos/demoballistic.cpp"
+)
+
+target_link_libraries(ballistic.out glfwLib)
 
 #add_executable(
 #    MeshDemoAppTest.out 
@@ -124,6 +133,7 @@ install(TARGETS demoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS newdemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS newarch.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 install(TARGETS newarch2.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
+install(TARGETS ballistic.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 #install(TARGETS MeshDemoAppTest.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 #install(TARGETS BallisticDemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
 #install(TARGETS PlatformDemo.out DESTINATION "${PROJECT_SOURCE_DIR}/bin/")
